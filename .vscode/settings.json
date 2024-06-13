@@ -1,0 +1,30 @@
+{
+	"[choicescript]": {
+		"editor.quickSuggestions": {
+			"comments": false,
+			"strings": false,
+			"other": false
+		}
+	},
+	"cSpell.words": [
+		"abcdefghijkl",
+		"bincode",
+		"codepoints",
+		"concatcp",
+		"cour",
+		"Crossterm",
+		"defdef",
+		"defgh",
+		"defghgh",
+		"defghijkl",
+		"defghijklijkl",
+		"defghijklm",
+		"dwyl",
+		"fixedstr",
+		"ijkl",
+		"ment",
+		"obrace",
+		"ratatui",
+		"rposition"
+	]
+}
