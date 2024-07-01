@@ -18,7 +18,6 @@ use serde::{Deserialize, Serialize};
 //                                Definitions.                                //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 /// A dictionary is a [`PrefixTreeSet`] of words.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[must_use]

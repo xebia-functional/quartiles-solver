@@ -13,6 +13,7 @@
 //! user can interact with the program via a text-based user interface (TUI) to
 //! input the game board and solve the puzzle.
 
+#![allow(dead_code)]
 #![allow(uncommon_codepoints)]
 
 mod app;
@@ -101,10 +102,12 @@ fn main()
 		Command::Solve { highlight_duration, quiet} =>
 		{
 			trace!("Opening TUI");
-			let solution = tui(highlight_duration, dictionary)
+			let mut solution = tui(highlight_duration, dictionary)
 				.unwrap_or_else(|e| panic!("Failed to drive TUI: {}", e));
 			if !quiet
 			{
+				solution.sort();
+				solution.dedup();
 				print_solution(solution);
 			}
 		}

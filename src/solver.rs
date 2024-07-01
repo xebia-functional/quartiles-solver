@@ -95,10 +95,13 @@ impl Solver
 		let full_paths = self.solution.iter()
 			.filter(|p| p.is_full())
 			.collect::<Vec<_>>();
+		let unique = full_paths.iter()
+			.map(|p| p.word(&self.fragments).to_string())
+			.collect::<HashSet<_>>();
 		// We expect exactly 5 full fragment paths in the solution to an
 		// official Quartiles puzzle. We allow for more, in case someone has
 		// supplied an unofficial puzzle.
-		if full_paths.len() < 5
+		if unique.len() < 5
 		{
 			return false
 		}
@@ -145,15 +148,15 @@ impl Solver
 		loop
 		{
 			let start_path = self.path;
-			trace!("considering: {}", self.word());
+			trace!("considering: {}", self.current_word());
 
 			// If the current fragment path corresponds to a valid word, then
 			// add it to the solution. Note that we discovered a valid word, so
 			// that we can return control to the caller after deriving the next
 			// context.
-			if self.dictionary.contains(self.word().as_str())
+			if self.dictionary.contains(self.current_word().as_str())
 			{
-				debug!("found word: {}", self.word());
+				debug!("found word: {}", self.current_word());
 				self.solution.push(self.path);
 				found_word = true;
 			}
@@ -161,7 +164,7 @@ impl Solver
 			// If the current fragment path does not denote the prefix of any
 			// word in the dictionary, then there is no need to continue
 			// searching along this path.
-			if self.dictionary.contains_prefix(self.word().as_str())
+			if self.dictionary.contains_prefix(self.current_word().as_str())
 			{
 				// Try to append the next fragment index.
 				match self.path.append()
@@ -218,7 +221,7 @@ impl Solver
 								trace!(
 									"next after pop and increment: {:?} => {}",
 									path,
-									self.word()
+									self.current_word()
 								);
 								self.path = path;
 							}
@@ -243,7 +246,7 @@ impl Solver
 				start_path,
 				"solver failed to make progress: {:?} => {}",
 				self.path,
-				self.word()
+				self.current_word()
 			);
 
 			if found_word
@@ -281,6 +284,22 @@ impl Solver
 		self
 	}
 
+	/// Get the candidate word corresponding to the specified fragment path.
+	///
+	/// # Arguments
+	///
+	/// * `path` - The fragment path.
+	///
+	/// # Returns
+	///
+	/// The candidate word corresponding to the specified fragment path.
+	#[inline]
+	#[must_use]
+	pub fn word(&self, path: &FragmentPath) -> str32
+	{
+		path.word(&self.fragments)
+	}
+
 	/// Get the candidate word corresponding to the current fragment path.
 	///
 	/// # Returns
@@ -288,9 +307,21 @@ impl Solver
 	/// The candidate word corresponding to the current fragment path.
 	#[inline]
 	#[must_use]
-	fn word(&self) -> str32
+	fn current_word(&self) -> str32
 	{
 		self.path.word(&self.fragments)
+	}
+
+	/// Get the solution to the puzzle, as a list of fragment paths.
+	///
+	/// # Returns
+	///
+	/// The solution to the puzzle, as a list of fragment paths.
+	#[inline]
+	#[must_use]
+	pub fn solution_paths(&self) -> Vec<FragmentPath>
+	{
+		self.solution.clone()
 	}
 
 	/// Get the solution to the puzzle, as a list of words.
@@ -340,7 +371,7 @@ impl FragmentPath
 	/// `true` if the fragment path is empty, `false` otherwise.
 	#[inline]
 	#[must_use]
-	fn is_empty(&self) -> bool
+	pub fn is_empty(&self) -> bool
 	{
 		self.0[0].is_none()
 	}
@@ -352,7 +383,7 @@ impl FragmentPath
 	/// `true` if the fragment path is full, `false` otherwise.
 	#[inline]
 	#[must_use]
-	fn is_full(&self) -> bool
+	pub fn is_full(&self) -> bool
 	{
 		self.0[3].is_some()
 	}

@@ -3,20 +3,17 @@
 //! The application state and logic, including the text-based user interface
 //! (TUI).
 
-use std::{io, mem::swap, rc::Rc, time::{Duration, Instant}};
+use std::{collections::HashSet, io, mem::swap, rc::Rc, time::{Duration, Instant}};
 
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use fixedstr::str8;
 use quartiles_solver::{dictionary::Dictionary, solver::{FragmentPath, Solver}};
 use ratatui::{
-	buffer::Buffer, layout::{Alignment, Constraint, Direction, Layout, Rect},
-	style::{Color, Style, Stylize},
-	widgets::{
+	buffer::Buffer, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::Text, widgets::{
 		block::{Position, Title},
 		Block, BorderType, Borders, List, ListState, Paragraph,
 		StatefulWidget, Widget, Wrap
-	},
-	Frame
+	}, Frame
 };
 
 use crate::tui::Tui;
@@ -486,8 +483,7 @@ impl App
 				}
 			});
 		// The solution is a simple word list.
-		let solution = solver.solution();
-		let list = List::new(solution.iter().map(|s| s.as_str()))
+		let list = List::new(self.solution_list(solver))
 			.block(
 				Block::default()
 					.title("Solution")
@@ -614,12 +610,11 @@ impl App
 					cell.render(row[column], buf);
 				}
 			});
-		// The solution is a simple word list. Highlight the last word, which
-		// corresponds to the argument fragment path.
-		let solution = solver.solution();
+		// The solution is a simple word list. Colorize the quartiles. Highlight
+		// the last word, which corresponds to the argument fragment path.
 		let mut list_state = ListState::default();
 		list_state.select(Some(solver.solution().len() - 1));
-		let list = List::new(solution.iter().map(|s| s.as_str()))
+		let list = List::new(self.solution_list(solver))
 			.block(
 				Block::default()
 					.title("Solution")
@@ -642,12 +637,14 @@ impl App
 	/// * `area` - The target area.
 	/// * `buf` - The target buffer.
 	/// * `solver` - The solver.
+	/// * `is_solved` - Whether the puzzle has been solved.
 	/// * `highlight` - The index of the solution to highlight, if any.
 	fn render_finished(
 		&self,
 		area: Rect,
 		buf: &mut Buffer,
 		solver: &Solver,
+		is_solved: bool,
 		highlight: Option<usize>
 	) {
 		// Split the screen into two parts: the puzzle and the solution.
@@ -688,6 +685,21 @@ impl App
 					.position(Position::Top)
 					.alignment(Alignment::Left)
 			)
+			.title(
+				Title::default()
+					.content(
+						if is_solved
+						{
+							"✓ Solved".green().bold()
+						}
+						else
+						{
+							"✗ No solution".red().bold()
+						}
+					)
+					.position(Position::Bottom)
+					.alignment(Alignment::Center)
+			)
 			.render(outer[0], buf);
 		// Build all of the cells.
 		let cells = self.cells.iter()
@@ -721,11 +733,11 @@ impl App
 					cell.render(row[column], buf);
 				}
 			});
-		// The solution is a simple word list. Highlight the selected word.
-		let solution = solver.solution();
+		// The solution is a simple word list. Colorize the quartiles. Highlight
+		// the selected word.
 		let mut list_state = ListState::default();
 		list_state.select(highlight);
-		let list = List::new(solution.iter().map(|s| s.as_str()))
+		let list = List::new(self.solution_list(solver))
 			.block(
 				Block::default()
 					.borders(Borders::ALL)
@@ -748,6 +760,42 @@ impl App
 					.bg(Color::Cyan)
 				);
 		StatefulWidget::render(&list, outer[1], buf, &mut list_state);
+	}
+
+	/// Construct a solution list from the solver, providing colorization based
+	/// on the status of individual words. Specifically, quartiles are colored
+	/// green, while shorter words are colored white. Deduplicate the list.
+	///
+	/// # Arguments
+	///
+	/// * `solver` - The solver.
+	///
+	/// # Returns
+	///
+	/// A list of styled text items.
+	fn solution_list(&self, solver: &Solver) -> Vec<Text>
+	{
+		let mut seen = HashSet::new();
+		solver.solution_paths().iter()
+			.filter_map(|path| {
+				let color = match path.is_full()
+				{
+					false => Color::White,
+					true => Color::Green
+				};
+				let word = solver.word(path).to_string();
+				let style = Style::default().fg(color);
+				if seen.contains(&word)
+				{
+					None
+				}
+				else
+				{
+					seen.insert(word.clone());
+					Some(Text::styled(word, style))
+				}
+			})
+			.collect()
 	}
 
 	/// Run any background tasks, such as the solver or the highlighter.
@@ -776,11 +824,13 @@ impl App
 			// Run the solver for only a short while, lest the application
 			// become unresponsive.
 			let (solver, path) = solver.solve(Duration::from_millis(5));
-			if solver.is_solved()
+			if solver.is_finished()
 			{
 				// The solver has finished.
+				let is_solved = solver.is_solved();
 				self.state = ExecutionState::Finished {
 					solver,
+					is_solved,
 					highlight: None
 				};
 			}
@@ -1033,8 +1083,8 @@ impl Widget for &App
 				self.render_solving(area, buf, solver),
 			ExecutionState::Highlighting { ref solver, ref path, .. } =>
 				self.render_highlighting(area, buf, solver, path),
-			ExecutionState::Finished { ref solver, highlight } =>
-				self.render_finished(area, buf, solver, highlight),
+			ExecutionState::Finished { ref solver, is_solved, highlight } =>
+				self.render_finished(area, buf, solver, is_solved, highlight),
 			ExecutionState::Exiting { .. } => {}
 		}
 	}
@@ -1075,6 +1125,9 @@ enum ExecutionState
 	Finished {
 		/// The solver for the puzzle.
 		solver: Solver,
+
+		/// Whether a complete solution was found.
+		is_solved: bool,
 
 		/// The index of the word to highlight in the solution.
 		highlight: Option<usize>
