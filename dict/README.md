@@ -29,8 +29,11 @@ Word list was post-processed to:
 
 1. Remove proper nouns (really, anything with a majuscule character other than
   the lone word I)
-1. Remove entries with non-alphanumeric characters
-2. Remove entries without vowels (with the exception of CWM and CRWTH)
+2. Remove entries with non-alphanumeric characters
+3. Remove entries without vowels (with the exception of CWM and CRWTH)
+4. Remove commonly censored words
 
 No attempt was made to remove other abbreviations, nor to preserve common
-interjections (HMM, PFFT, …).
+interjections (HMM, PFFT, …). No attempt was made to remove offensive words.
+No attempt was made to achieve equivalence or parity with the official Quartiles
+dictionary.
