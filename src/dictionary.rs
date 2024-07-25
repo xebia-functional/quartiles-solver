@@ -128,18 +128,17 @@ impl Dictionary
 			let txt_path = dir.as_ref().join(format!("{}.txt", name));
 			let dictionary = Self::read_from_file(&txt_path)?;
 			trace!("Read text dictionary: {}", txt_path.display());
-			if dictionary.serialize_to_file(&dict_path).is_err()
+			match dictionary.serialize_to_file(&dict_path)
 			{
-				// If we can't write the binary dictionary, that's fine; we
-				// can still use the text dictionary. Log the error and move on.
-				warn!(
-					"Failed to write binary dictionary: {}",
+				Ok(_) => trace!(
+					"Wrote binary dictionary: {}",
 					dict_path.display()
-				);
-			}
-			else
-			{
-				trace!("Wrote binary dictionary: {}", dict_path.display());
+				),
+				Err(e) => warn!(
+					"Failed to write binary dictionary: {}: {}",
+					dict_path.display(),
+					e
+				)
 			}
 			Ok(dictionary)
 		}

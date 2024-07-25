@@ -112,7 +112,7 @@ fn main()
 	let _ = Dictionary::open(dir(), name()).unwrap();
 
 	// Run the benchmarks.
-	let mut criterion = Criterion::default();
+	let mut criterion = Criterion::default().configure_from_args();
 	let mut group = criterion.benchmark_group("benchmarks");
 	group.measurement_time(Duration::from_secs(30));
 	bench_read_from_file(&mut group);
@@ -121,7 +121,5 @@ fn main()
 	group.finish();
 
 	// Generate the final summary.
-	Criterion::default()
-		.configure_from_args()
-		.final_summary();
+	criterion.final_summary();
 }

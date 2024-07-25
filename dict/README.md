@@ -32,8 +32,8 @@ Word list was post-processed to:
 2. Remove entries with non-alphanumeric characters
 3. Remove entries without vowels (with the exception of CWM and CRWTH)
 4. Remove commonly censored words
+5. Remove words longer than 16 letters (because they can't appear in Quartiles)
 
 No attempt was made to remove other abbreviations, nor to preserve common
-interjections (HMM, PFFT, …). No attempt was made to remove offensive words.
-No attempt was made to achieve equivalence or parity with the official Quartiles
-dictionary.
+interjections (HMM, PFFT, …). No attempt was made to achieve equivalence or
+parity with the official Quartiles dictionary.
