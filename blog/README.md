@@ -198,7 +198,6 @@ $$
 		20 \cdot \cancel{19 \cdot 18 \cdot 17 \cdot \cdots}
 	}{\cancel{19 \cdot 18 \cdot17 \cdot \cdots}}
 	= 20 \\[2em]
-
 &P(20,2)
 	= \frac{20!}{(20-2)!}
 	= \frac{20!}{18!}
@@ -207,13 +206,11 @@ $$
 	}{\cancel{18 \cdot 17 \cdot \cdots}}
 	= 20\cdot19
 	= 380 \\[2em]
-
 &P(20,3)
 	= \frac{20!}{(20-3)!}
 	= \frac{20!}{17!}
 	= 20 \cdot 19 \cdot 18
 	= 6840 \\[2em]
-
 &P(20,4)
 	= \frac{20!}{(20-4)!}
 	= \frac{20!}{16!}
