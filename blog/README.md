@@ -26,7 +26,7 @@ Broadly speaking, Quartiles comprises three elements:
    _word fragments_, each comprising 2 to 4 letters, such that there are no
    duplicate word fragments. The word fragments obtained from the 5 words are
    all scrambled together and then arranged to form a 4×5 game board of 20
-   _cells_. For example, the word `algorithm` might be carved up into `al`,
+   _cells_. For example, the word `algorithms` might be carved up into `al`,
    `gor`, `it`, and `hms`.
 2. A _solution tracker_ that enumerates valid English words discovered by the
    _player_. Each word uses 1 to 4 cells from the game board. Words using 4
