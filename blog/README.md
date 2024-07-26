@@ -29,9 +29,9 @@ Broadly speaking, Quartiles comprises three elements:
    `gor`, `it`, and `hms`.
 2. A _solution tracker_ that enumerates valid English words discovered by the
    _player_. Each word uses 1 to 4 cells from the game board. Words using 4
-   cells are _quartiles_. Cells may be reused, so multiple words may contain the
-   same word fragment, but complete words may not be reused. The game board is
-   constructed such that only 5 quartiles are present.
+   cells are called _quartiles_. Cells may be reused, so multiple words may
+   contain the same word fragment, but complete words may not be reused. The
+   game board is constructed such that only 5 quartiles are present.
 3. A _dictionary_ of English words that encompasses a suitably large extract of
    the English lexicon. The game itself furnishes the game board and updates the
    solution tracker, but the player brings the dictionary, typically in the form
@@ -39,13 +39,14 @@ Broadly speaking, Quartiles comprises three elements:
 
 The game is won when the solution tracker contains 5 quartiles. Because of how
 the game board was constructed, these are guaranteed to be the 5 original
-quartiles. To make the game competitive among friends, words are scored based on
-the number of word fragments that they contain, with quartiles earning the most
-points. The highest possible score arises from finding not only the 5 quartiles,
-but from discovering every word accepted by Apple's official Quartiles
-dictionary (which does not appear to be available to the public). But we will
-not concern ourselves here with scoring mechanics, only with fully populating
-the solution tracker with respect to some dictionary.
+quartiles; there will never be "extra" quartiles. To make the game competitive
+among friends, words are scored based on the number of word fragments that they
+contain, with quartiles earning the most points. The highest possible score
+arises from finding not only the 5 quartiles, but from discovering every word
+accepted by Apple's official Quartiles dictionary (which does not appear to be
+available to the public). But we will not concern ourselves here with scoring
+mechanics, only with fully populating the solution tracker with respect to some
+dictionary.
 
 So why build a solver for the relatively new Quartiles rather than the more
 famous and better established
@@ -101,7 +102,7 @@ quartile, and consequently the player knows when all quartiles have been found.
 The player theoretically "knows" when every word has been found, because they
 can theoretically make an exhaustive search of the board, comparing each allowed
 combination of word fragments against their dictionary. (Besides, the online
-game is nice: it tells you when no words remain undiscovered.)
+Quartiles is nice: it tells you when no words remain undiscovered.)
 
 > ℹ️ Fun facts
 >
@@ -114,7 +115,7 @@ game is nice: it tells you when no words remain undiscovered.)
 >
 > Quartiles is also _memoryless_, meaning that the player's moves need not be
 > recorded in historical order to ensure adherence to the rules of play. In
-> fact, the `k` moves played so far are mutually commutative, which is why play
+> fact, the $k$ moves played so far are mutually commutative, which is why play
 > history not need be maintained. The solution tracker represents a set (rather
 > than a sequence) of moves. Most importantly for play, the legal next moves are
 > fully determinable without appeal to the play history.
@@ -127,7 +128,8 @@ game is nice: it tells you when no words remain undiscovered.)
 > games require maintaining a play history, i.e., a _score sheet_, to determine
 > the legality of upcoming moves. As recording this (visible) score sheet is
 > mandated by official rules, at least in formal settings, both games become
-> fully reconstructible perfect information games, but neither are memoryless.
+> fully reconstructible perfect information games, though neither are
+> memoryless.
 
 ## Tractability
 
@@ -135,11 +137,11 @@ We have established that it is theoretically possible to build an effective
 solver for Quartiles, but before committing to code _anything_ we should at
 least have a rough sense of whether execution of our algorithm will be
 _tractable_. In other words, will the program arrive at a solution in a
-reasonable amount of time?
+_reasonable_ amount of time?
 
 Reasonableness is relative to the problem description, of course. If an
-algorithm takes a week to decide whether `"dog"` is correctly spelled, then it
-is intractable for the problem at hand; but if an algorithm takes (only) a week
+algorithm takes a week to decide whether `dog` is correctly spelled, then it is
+intractable (for basically any problem); but if an algorithm takes (only) a week
 to complete a brute force attack against
 [SHA-3](https://www.nist.gov/publications/sha-3-standard-permutation-based-hash-and-extendable-output-functions),
 then someone would be absolutely delighted (and most other someones very, very
@@ -148,10 +150,10 @@ upset).
 > 😅 Don't do the impossible
 >
 > Before coming to Xebia, employers requested at least twice that I perform a
-> task which, practically speaking, would entail me winning a
+> task which, practically speaking, would entail winning a
 > [Millennium Prize](https://en.wikipedia.org/wiki/Millennium_Prize_Problems)
 > first. Both times it would have been the prize for
-> [P versus NP](https://en.wikipedia.org/wiki/P_versus_NP_problem); at least
+> [P versus NP](https://en.wikipedia.org/wiki/P_versus_NP_problem), so at least
 > there's that. Moral of the story: _always_ do a sanity check that your problem
 > is both [decidable](https://en.wikipedia.org/wiki/Decidability_(logic)) and
 > tractable _before_ commencing work on the problem!
@@ -180,33 +182,56 @@ demonstrate below.
 
 Going back to basics, the formula for $k$-permutations of $n$ is:
 
-$P(n,k) = (n!)/((n-k)!)$
+$$P(n,k) = \frac{n!}{(n-k)!}$$
 
 Where $n$ is the total number of elements in the set (of tiles in Quartiles) and
-$k$ is the number of elements to arrange into a sequence. $n$ is 20, the number
-of tiles on the game board. We restrict $k$ to $[1,4]$ and calculate the sum of
-the four applications:
+$k$ is the number of those elements to arrange into a sequence. $n$ is 20, the
+number of tiles on the game board. We restrict $k$ to $[1,4]$ and calculate the
+sum of the four pertinent applications. The individual equations give us:
 
-$sum_(k=1)^4 P(20,k) = P(20,1) + P(20,2) + P(20,3) + P(20,4)$
-
-The individual equations give us:
-
-$P(20,1) = (20!)/((20-1)!) = (20!)/(19!) = (20*19*18*17*cdots)/(19*18*17*cdots) = 20$
-
-$P(20,2) = (20!)/((20-2)!) = (20!)/(18!) = (20*19*18*17*cdots)/(18*17*cdots) = 20*19 = 380$
-
-$P(20,3) = (20!)/((20-3)!) = (20!)/(17!) = 20*19*18 = 6840$
-
-$P(20,4) = (20!)/((20-4)!) = (20!)/(16!) = 20*19*18*17 = 116280$
+$$
+\begin{align*}
+&P(20,1)
+	= \frac{20!}{(20-1)!}
+	= \frac{20!}{19!}
+	= \frac{
+		20 \cdot \cancel{19 \cdot 18 \cdot 17 \cdot \cdots}
+	}{\cancel{19 \cdot 18 \cdot17 \cdot \cdots}}
+	= 20 \\[2em]
+&P(20,2)
+	= \frac{20!}{(20-2)!}
+	= \frac{20!}{18!}
+	= \frac{
+		20 \cdot19 \cdot \cancel{18 \cdot17 \cdot \cdots}
+	}{\cancel{18 \cdot 17 \cdot \cdots}}
+	= 20\cdot19
+	= 380 \\[2em]
+&P(20,3)
+	= \frac{20!}{(20-3)!}
+	= \frac{20!}{17!}
+	= 20 \cdot 19 \cdot 18
+	= 6840 \\[2em]
+&P(20,4)
+	= \frac{20!}{(20-4)!}
+	= \frac{20!}{16!}
+	= 20 \cdot 19 \cdot 18 \cdot 17
+	= 116280
+\end{align*}
+$$
 
 And drumroll:
 
-$sum_(k=1)^4 P(20,k) = P(20,1)+P(20,2)+P(20,3)+P(20,4) = 20+380+6840+116280 = 123520$
+$$
+\begin{align*}
+\sum_{k=1}^4 P(20,k) &= P(20,1) + P(20,2) + P(20,3) + P(20,4) \\[1em]
+	&= 20 + 380 + 6840 + 116280 \\[1em]
+	&= 123520
+\end{align*}$$
 
-There are just $123520$ ways to arrange up to $4$ tiles from our game board of
+There are "just" $123520$ ways to arrange up to $4$ tiles from our game board of
 $20$. We wouldn't want to search this space manually, but computers are
 fast<sup>citation needed</sup>, making this number small and our problem
-tractable — just as we expected.
+highly tractable — just as we expected.
 
 ## Dictionary representation
 
@@ -217,17 +242,18 @@ dictionary. But if we have to consult the dictionary for $123520$ possible
 permutations, we haven't saved any effort. We want to look at _fewer_
 permutations.
 
-For that, we need a new key insight: most permutations of tiles will not produce
+For that, we use a new key insight: most permutations of tiles will not produce
 _even the beginning_ of an English word. This sounds more promising.
 
-Let's chop "permutation" up into 4 fragments, thus: "pe", "rmut", "at", "ion".
-If we know that "rmut" doesn't begin any English word — and we _do_ know this —
-then there's no sense in consulting the dictionary about "rmutpeation",
-"rmutatpeion", "rmutationpe", and so forth. We can completely eliminate
-$P(3,3) = (3!)/((3 - 3)!) = 3 * 2 * 1 = 6$ permutations from the search space.
-We don't have to consult the dictionary about them. Heck, we don't even have to
-visit them during the search. If only there were some data structure to support
-this kind of search…
+Let's chop `permutation` up into 4 fragments, thus: `pe`, `rmut`, `at`,
+`ion`. If we know that `rmut` doesn't begin any English word — and we _do_
+know this — then there's no sense in consulting the dictionary about
+`rmutpeation`, `rmutatpeion`, `rmutationpe`, and so forth. Assuming that
+these are but 4 of 20 tiles of a Quartiles board, we can completely eliminate
+$P(20,3) = 6840$ permutations from the search space whenever the first tile
+isn't a viable English prefix. We don't have to consult the dictionary about
+them. Heck, we don't even have to visit them during the search. If only there
+were some data structure to support this kind of search…
 
 ### Prefix trees
 
@@ -243,14 +269,16 @@ Representing an English dictionary as a prefix tree is straightforward:
 
 1. Each node comprises only the marker flag mentioned above. Let's say it's a
    boolean called `endsWord`, meaning that the node serves as the terminus for
-   a word in the dictionary. `endsWord` is true if and only if the path
+   a word in the dictionary. `endsWord` is `true` if and only if the path
    traversed to reach the node spells an English word contained within the
    dictionary.
 2. Each edge is annotated with a Roman letter.
-3. Each node has up to twenty six out-edges, one for each possible Roman letter.
+3. Each node has up to 26 out-edges, one for each possible Roman letter.
+4. The root node is a sentinel — the empty "word" comprising no letters.
 
 Here's a simple example that illustrates the 6-word dictionary
-`<"mo", "moo", "mood", "moon", "moot", "why">`:
+`<"mo", "moo", "mood", "moon", "moot", "why">, where the leftmost node is the
+root node:
 
 ```mermaid
 flowchart LR
@@ -278,7 +306,7 @@ flowchart LR
     wh -- y --> why
 ```
 
-The content of each node is the value of `endsWord`, which we write briefly as
+The label on each node is the value of `endsWord`, which we write briefly as
 either `true` or `false`. The left-to-right orientation of the diagram, chosen
 to mirror the left-to-right text direction of English, nicely visualizes how
 English words are encoded in the edges of the prefix tree.
@@ -288,14 +316,14 @@ word isn't present in this dictionary:
 
 1. Left-to-right traversal of the word's constituent letters completes but
    arrives at a node whose `endsWord` marker is `false`. For example, this case
-   eliminates "wh".
+   eliminates `wh`.
 2. Left-to-right traversal of the word's constituent letters must be abandoned
-   because of a missing edge. For example, this case eliminates "mook".
+   because of a missing edge. For example, this case eliminates `mook`.
 
 The second case is much more interesting than the first, because it provides the
 basis for eliminating fruitless prefixes. Given that the node corresponding to
-"moo" does not have an out-edge on "j", we conclude that no words known to this
-dictionary begin with "mooj". Now we have a nice way to prune the search space,
+`moo` does not have an out-edge on `j`, we conclude that no words known to this
+dictionary begin with `mooj`. Now we have a nice way to prune the search space,
 statistically ensuring that we won't need to exhaustively check all $123520$
 possible candidates.
 
@@ -350,7 +378,10 @@ pfx = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 ```
 
-We'll expand upon this incrementally, but this is a good beginning.
+We'll expand upon this incrementally, but this is a good beginning. Note that we
+will commit our
+[`Cargo.lock`](https://github.com/xebia-functional/quartiles-solver/raw/main/Cargo.lock)
+because one of our crates is executable.
 
 ### Implementing the dictionary
 
@@ -374,15 +405,16 @@ pub struct Dictionary(PrefixTreeSet<String>);
 ```
 
 We expect instances of `Dictionary` to be expensive, as each potentially
-contains an entire English dictionary. To protect against accidental discard of
-a `Dictionary` at a function call site, we apply the
+contains an entire English dictionary (of $\ge 70,000$ words, if using the word
+list included in the project). To protect against accidental discard of a
+`Dictionary` at a function call site, we apply the
 [`must_use`](https://doc.rust-lang.org/reference/attributes/diagnostics.html#the-must_use-attribute)
 attribute. Now the compiler will object whenever a `Dictionary` returned by a
 function is unused.
 
 Now we make a nice big `impl Dictionary` block to put our logic inside. We lead
-with a simple constructor that behaves identically to `default` but can be
-inlined.
+with a simple constructor that behaves identically to `Default::default` but
+which can be inlined.
 
 ```rust
 #[inline]
@@ -419,7 +451,7 @@ pub fn contains_prefix(&self, prefix: &str) -> bool
 ```
 
 The last one will be especially important when we write the solver, as this
-effects the prefix-based pruning that I described above.
+achieves the prefix-based pruning that I described above.
 
 It might be good to have the ability to insert some words into a `Dictionary`,
 so let's start simple:
@@ -458,7 +490,7 @@ Basically, `read_from_file` slurps the whole text file into memory, splitting at
 resident line delimiters, and then uses `populate` to build the `Dictionary`.
 `populate` incrementally populates the underlying `PrefixTreeSet`, one word at
 a time, so it must traverse the tree repeatedly. Honestly, this is fast enough
-even for 70,000 words, but we can do better. Not the first time, no, but on
+even for $70,000$ words, but we can do better. Not the first time, no, but on
 subsequent reads in subsequent runs of the application. How? By serializing, and
 later deserializing, the `PrefixTreeSet`.
 
@@ -538,12 +570,12 @@ Here's an illustration of the algorithm, simplified to disregard failure modes:
 
 ```mermaid
 flowchart TB
-	make_binary_path("Make binary path:\ndir + name + .dict")
+	make_binary_path("Make binary path:\nbin ← dir + name + .dict")
 	exists{Binary\nexists?}
-	read_binary("deserialize_from_file()")
-	make_text_path("Make text path:\ndir + name + .txt")
-	read_text("read_from_file()")
-	write_binary("serialize_to_file()")
+	read_binary("deserialize_from_file(bin)")
+	make_text_path("Make text path:\ntxt ← dir + name + .txt")
+	read_text("read_from_file(txt)")
+	write_binary("serialize_to_file(bin)")
 	return(Return\ndictionary)
 
 	make_binary_path --> exists
@@ -557,13 +589,13 @@ flowchart TB
 
 In words, look for a file named `{dict}/{name}.dict`, treating it as a
 serialized dictionary if it exists. If it does, great, use it. If it doesn't,
-look for a file named `{dict}/{name}.txt`, treating it as a plain text English
+look for a file named `{dict}/{name}.txt`, treating it as a plaintext English
 word list. Build the dictionary from the text file, then write out the
 serialized form to `{dict}/{name}.dict` for some future pass through this
 algorithm. The happy paths all lead to a ready-to-go `Dictionary`.
 
 To make sure that everything works, we add some basic unit tests, which you can
-see in the full
+see at the bottom of the full
 [`src/dictionary.rs`](https://github.com/xebia-functional/quartiles-solver/raw/main/src/dictionary.rs).
 
 ## Benchmarking
@@ -574,7 +606,8 @@ empirically, by establishing some benchmarks.
 
 While nightly Rust supports benchmarking directly through the
 [`bench`](https://doc.rust-lang.org/nightly/unstable-book/library-features/test.html)
-attribute, it's nice to use the `stable` channel wherever possible. Fortunately,
+attribute, it's nice to use the `stable` channel wherever possible, as this
+gives the warm fuzzies of writing the safest possible Rust code. Fortunately,
 we can still benchmark our code on `stable`, but we'll need to bring in a
 benchmarking crate, like [Criterion](https://crates.io/crates/criterion), to
 close the feature gap. We'll need to tweak our
@@ -602,15 +635,16 @@ benchmark runner, where to find our benchmarks and how to run them. We use
 We set `harness` to `false` to disable the
 [`libtest`](https://doc.rust-lang.org/test/index.html) harness, which allows us
 to provide our own `main` function, thereby securing fine-grained control over
-how our benchmarks are organized.
+how our benchmarks are organized, configured, and executed.
 
-Everything is properly configured, so let's turn our attention to the benchmarks
-themselves.
+Everything is properly configured now, so let's turn our attention to the
+benchmarks themselves.
 
 ### Text file benchmark
 
 First, let's create a benchmark for building a `Dictionary` from a text file.
-The test itself is quite small:
+The test itself is quite small, but quite complex because of dependency
+injection:
 
 ```rust
 fn bench_read_from_file<M: Measurement>(g: &mut BenchmarkGroup<M>)
@@ -626,8 +660,9 @@ abstracts over the conceivable metrics for benchmarking — wall time, memory
 utilization, energy consumption, etc.
 As of the time of writing,
 [`criterion::measurement::WallTime`](https://docs.rs/criterion/0.5.1/criterion/measurement/struct.WallTime.html)
-is the only _supported_ benchmark, however. Related benchmarks are organized
-into instances of [`criterion::BenchmarkGroup`](https://docs.rs/criterion/0.5.1/criterion/struct.BenchmarkGroup.html),
+is the only _supported_ benchmark, however; this is fine, because it's what we
+want to measure. Related benchmarks are organized into instances of
+[`criterion::BenchmarkGroup`](https://docs.rs/criterion/0.5.1/criterion/struct.BenchmarkGroup.html),
 allowing configuration to be aggregated.
 [`bench_function`](https://docs.rs/criterion/0.5.1/criterion/struct.BenchmarkGroup.html#method.bench_function)
 accepts an identifier (`"read_from_file"`) and an `FnMut`, injecting a
@@ -636,8 +671,8 @@ that can run the actual benchmark repeatedly via
 [`iter`](https://docs.rs/criterion/0.5.1/criterion/struct.Bencher.html#method.iter).
 As expected, the actual function under test is `Dictionary::read_from_file`.
 
-`path_dict` is a just utility function that supplies the file to the English
-word list:
+`path_dict` is just a trivial utility function that supplies the filesystem path
+to the English word list:
 
 ```rust
 #[inline]
@@ -664,18 +699,18 @@ const fn name() -> &'static str
 ```
 
 [`const_format::concatcp`](https://docs.rs/const_format/0.2.32/const_format/macro.concatcp.html)
-performs compile-time concatenation of primitive types. We leverage this to
-provide some abstraction without losing the benefit of hard coding string
-literals.
+performs compile-time string conversion and concatenation of primitive types. We
+leverage this to provide some abstraction without losing the benefit of hard
+coding string literals.
 
 Note that `bench_read_from_file` does not _run_ the benchmark. Rather, it
-defines it and adds it to the specified `BenchmarkGroup`. We have to tell the
-benchmark manager to run our groups, which we'll do in `main`, below.
+_defines_ it and _installs_ it into the specified `BenchmarkGroup`. We have to
+tell the benchmark manager to run our groups, which we'll do in `main`, below.
 
 ### Binary file benchmark
 
 Having seen `bench_read_from_file` already, you can read the parallel benchmark
-for serialized binary files like a champ:
+like a champ:
 
 ```rust
 fn bench_deserialize_from_file<M: Measurement>(g: &mut BenchmarkGroup<M>)
@@ -696,10 +731,11 @@ const fn path_dict() -> &'static str
 The boilerplate is identical, but we're testing
 `Dictionary::deserialize_from_file` instead.
 
-### Wiring up the `BenchmarkGroup`
+### Wiring everything up
 
 Because we asserted responsibility for `main`, defining the `BenchmarkGroup` is
-our responsibility. Our `main` function wires everything together:
+our responsibility. Our `main` function wires everything together and runs the
+benchmarks:
 
 ```rust
 fn main()
@@ -725,7 +761,9 @@ fn main()
 is the benchmark manager. We create a basic one and use
 [`benchmark_group`](https://docs.rs/criterion/0.5.1/criterion/struct.Criterion.html#method.benchmark_group)
 to create the `BenchmarkGroup` with which `bench_read_from_file` and
-`bench_deserialize_from_file` register themselves.
+`bench_deserialize_from_file` register themselves. We use
+[`measurement_time`](https://docs.rs/criterion/0.5.1/criterion/struct.BenchmarkGroup.html#method.measurement_time)
+to run each test as many times as possible in 30 seconds.
 [`finish`](https://docs.rs/criterion/0.5.1/criterion/struct.BenchmarkGroup.html#method.finish)
 consumes the `BenchmarkGroup`, executes the constituent benchmarks, and attaches
 the summary reports to the benchmark manager that created it. Lastly,
@@ -733,11 +771,22 @@ the summary reports to the benchmark manager that created it. Lastly,
 
 ### Verdict
 
-On my hardware, `Dictionary::deserialize_from_file` is consistently about 5ms
-faster than `Dictionary::read_from_file`. In the grand scheme of things, it's
-not much, but it's definitely and reliably faster to deserialize a `Dictionary`
-than it is to construct one from a plain-text English word list. It's a win, and
-I'll take it.
+Here's the simplified output of `cargo bench` for my hardware:
+
+```text
+     Running benches/benchmarks.rs
+benchmarks/read_from_file
+                        time:   [29.051 ms 29.092 ms 29.133 ms]
+
+benchmarks/deserialize_from_file
+                        time:   [24.011 ms 24.058 ms 24.105 ms]
+```
+
+`Dictionary::deserialize_from_file` is consistently about 5ms faster than
+`Dictionary::read_from_file`, which is significant in computer time. In wall
+time, it's not much, but it's definitely and reliably faster to deserialize a
+`Dictionary` than it is to construct one from a plaintext English word list.
+It's a win, and I'll take it.
 
 ### The English dictionary
 
