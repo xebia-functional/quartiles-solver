@@ -135,3 +135,17 @@ Options:
   -h, --help
           Print help
 ```
+
+Testing
+-------
+
+```shell
+$ cargo test
+```
+
+Benchmarking
+------------
+
+```shell
+$ cargo bench
+```
