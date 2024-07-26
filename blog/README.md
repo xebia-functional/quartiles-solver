@@ -11,7 +11,8 @@ TUIs. To experiment with the finished app, you'll need to pull the
 [project](https://github.com/xebia-functional/quartiles-solver) locally. You can
 follow the detailed instructions in the
 [`README.md`](https://github.com/xebia-functional/quartiles-solver/blob/main/README.md)
-to build the project on Windows, macOS, or Linux.
+to build, use, test, benchmark, or install the project on Windows, macOS, or
+Linux.
 
 In this first post, we'll introduce Quartiles, analyze why it's a good candidate
 for automated solution, and finally build the dictionary that the solver will

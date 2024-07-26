@@ -149,3 +149,23 @@ Benchmarking
 ```shell
 $ cargo bench
 ```
+
+Installing
+----------
+
+You can install the binary, `quartiles-solver`, so that it can be run without
+the project directory:
+
+```shell
+$ cargo install --path .
+```
+
+Be sure to copy the dictionary directory to its desired installation location.
+To use the installed binary, you will have to specify this location when running
+the application:
+
+```shell
+$ quartiles-solver -d /path/to/installed/directory
+```
+
+You must also specify `-n` if you renamed the dictionary files.
