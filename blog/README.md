@@ -197,7 +197,7 @@ $$
 	= \frac{
 		20 \cdot \cancel{19 \cdot 18 \cdot 17 \cdot \cdots}
 	}{\cancel{19 \cdot 18 \cdot17 \cdot \cdots}}
-	= 20 \\[2em]
+	= 20 \\ \\
 &P(20,2)
 	= \frac{20!}{(20-2)!}
 	= \frac{20!}{18!}
@@ -205,12 +205,12 @@ $$
 		20 \cdot19 \cdot \cancel{18 \cdot17 \cdot \cdots}
 	}{\cancel{18 \cdot 17 \cdot \cdots}}
 	= 20\cdot19
-	= 380 \\[2em]
+	= 380 \\ \\
 &P(20,3)
 	= \frac{20!}{(20-3)!}
 	= \frac{20!}{17!}
 	= 20 \cdot 19 \cdot 18
-	= 6840 \\[2em]
+	= 6840 \\ \\
 &P(20,4)
 	= \frac{20!}{(20-4)!}
 	= \frac{20!}{16!}
@@ -223,8 +223,8 @@ And drumroll:
 
 $$
 \begin{align*}
-\sum_{k=1}^4 P(20,k) &= P(20,1) + P(20,2) + P(20,3) + P(20,4) \\[1em]
-	&= 20 + 380 + 6840 + 116280 \\[1em]
+\sum_{k=1}^4 P(20,k) &= P(20,1) + P(20,2) + P(20,3) + P(20,4) \\
+	&= 20 + 380 + 6840 + 116280 \\
 	&= 123520
 \end{align*}$$
 
