@@ -181,9 +181,9 @@ extent of the search space. I say "maximum" because we can very effectively
 prune the search space to reduce the scale of the problem, which I will
 demonstrate below.
 
-Going back to basics, the formula for
-[$k$-permutations of $n$](https://en.wikipedia.org/wiki/Permutation#k-permutations_of_n)
-is:
+Going back to basics, the
+[formula](https://en.wikipedia.org/wiki/Permutation#k-permutations_of_n) for
+$k$-permutations of $n$ is:
 
 $$P(n,k) = \frac{n!}{(n-k)!}$$
 
