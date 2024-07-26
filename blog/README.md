@@ -230,8 +230,8 @@ $$
 
 There are "just" $123520$ ways to arrange up to $4$ tiles from our game board of
 $20$. We wouldn't want to search this space manually, but computers are
-fast<sup>citation needed</sup>, making this number small and our problem
-highly tractable — just as we expected.
+[fast](https://gist.github.com/hellerbarde/2843375), making this number small
+and our problem highly tractable — just as we expected.
 
 ## Dictionary representation
 
@@ -318,7 +318,9 @@ word isn't present in this dictionary:
    arrives at a node whose `endsWord` marker is `false`. For example, this case
    eliminates `wh`.
 2. Left-to-right traversal of the word's constituent letters must be abandoned
-   because of a missing edge. For example, this case eliminates `mook`.
+   because of a missing edge. For example, this case eliminates `mook` (which
+   is valid North American slang, but not present in the tiny example
+   dictionary).
 
 The second case is much more interesting than the first, because it provides the
 basis for eliminating fruitless prefixes. Given that the node corresponding to
@@ -360,7 +362,7 @@ should support [bincode](https://crates.io/crates/bincode) serialization via
 traceable via logging, so we choose [log](https://crates.io/crates/log) as our
 veneer and [env_logger](https://crates.io/crates/env_logger) as our specific
 provider. We use this
-[`Cargo.toml`](https://github.com/xebia-functional/quartiles-solver/raw/main/Cargo.toml)
+[`Cargo.toml`](https://github.com/xebia-functional/quartiles-solver/blob/main/Cargo.toml)
 to get started:
 
 ```toml
@@ -380,13 +382,13 @@ serde = { version = "1.0", features = ["derive"] }
 
 We'll expand upon this incrementally, but this is a good beginning. Note that we
 will commit our
-[`Cargo.lock`](https://github.com/xebia-functional/quartiles-solver/raw/main/Cargo.lock)
+[`Cargo.lock`](https://github.com/xebia-functional/quartiles-solver/blob/main/Cargo.lock)
 because one of our crates is executable.
 
 ### Implementing the dictionary
 
 Let's drop a new Rust file into the project:
-[`src/dictionary.rs`](https://github.com/xebia-functional/quartiles-solver/raw/main/src/dictionary.rs).
+[`src/dictionary.rs`](https://github.com/xebia-functional/quartiles-solver/blob/main/src/dictionary.rs).
 As you might expect, we'll implement the dictionary herein.
 
 For our dictionary, we employ the
@@ -596,7 +598,7 @@ algorithm. The happy paths all lead to a ready-to-go `Dictionary`.
 
 To make sure that everything works, we add some basic unit tests, which you can
 see at the bottom of the full
-[`src/dictionary.rs`](https://github.com/xebia-functional/quartiles-solver/raw/main/src/dictionary.rs).
+[`src/dictionary.rs`](https://github.com/xebia-functional/quartiles-solver/blob/main/src/dictionary.rs).
 
 ## Benchmarking
 
@@ -611,7 +613,7 @@ gives the warm fuzzies of writing the safest possible Rust code. Fortunately,
 we can still benchmark our code on `stable`, but we'll need to bring in a
 benchmarking crate, like [Criterion](https://crates.io/crates/criterion), to
 close the feature gap. We'll need to tweak our
-[`Cargo.toml`](https://github.com/xebia-functional/quartiles-solver/raw/main/Cargo.toml),
+[`Cargo.toml`](https://github.com/xebia-functional/quartiles-solver/blob/main/Cargo.toml),
 of course. We'll add this at the bottom:
 
 ```toml
@@ -631,7 +633,7 @@ The `[[bench]]` section is more important, as it tells
 [`cargo bench`](https://doc.rust-lang.org/cargo/commands/cargo-bench.html), the
 benchmark runner, where to find our benchmarks and how to run them. We use
 `name` to ensure that the runner looks for our benchmarks in
-[`benches/benchmarks.rs`](https://github.com/xebia-functional/quartiles-solver/raw/main/benches/benchmarks.rs).
+[`benches/benchmarks.rs`](https://github.com/xebia-functional/quartiles-solver/blob/main/benches/benchmarks.rs).
 We set `harness` to `false` to disable the
 [`libtest`](https://doc.rust-lang.org/test/index.html) harness, which allows us
 to provide our own `main` function, thereby securing fine-grained control over
@@ -792,7 +794,7 @@ It's a win, and I'll take it.
 
 One final note, about the English dictionary itself. If you're interested in how
 I created and curated the
-[English dictionary](https://github.com/xebia-functional/quartiles-solver/raw/main/dict/english.txt)
+[English dictionary](https://github.com/xebia-functional/quartiles-solver/blob/main/dict/english.txt)
 that I bundled with the project, check out
 [`dict/README.md`](https://github.com/xebia-functional/quartiles-solver/blob/main/dict/README.md).
 Methodology, as well as relevant copyrights and attributions, are all contained

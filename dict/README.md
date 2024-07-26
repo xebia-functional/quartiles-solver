@@ -1,14 +1,15 @@
 # Dictionaries
 
-Custom word list generated from http://app.aspell.net/create using SCOWL
-with parameters:
-  diacritic: strip
-  max_size: 60
-  max_variant: 3
-  special: <none>
-  spelling: US
+Custom word list generated from http://app.aspell.net/create using
+[SCOWL](http://wordlist.aspell.net) with parameters:
 
-Using Git Commit From: Mon Dec 7 20:14:35 2020 -0500 [5ef55f9]
+* `diacritic`: strip
+* `max_size`: 60
+* `max_variant`: 3
+* `special`: <none>
+* `spelling`: US
+
+Using Git Commit From: `Mon Dec 7 20:14:35 2020 -0500 [5ef55f9]`
 
 ```
 Copyright 2000-2019 by Kevin Atkinson
@@ -34,6 +35,9 @@ Word list was post-processed to:
 4. Remove commonly censored words
 5. Remove words longer than 16 letters (because they can't appear in Quartiles)
 
-No attempt was made to remove other abbreviations, nor to preserve common
-interjections (HMM, PFFT, …). No attempt was made to achieve equivalence or
-parity with the official Quartiles dictionary.
+Notes:
+
+* No attempt was made to remove other abbreviations.
+* No attempt was made to to preserve common interjections (HMM, PFFT, …).
+* No attempt was made to achieve equivalence or parity with the official
+  Quartiles dictionary.
