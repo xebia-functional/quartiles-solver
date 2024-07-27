@@ -341,9 +341,9 @@ brevity, from the code excerpts below.
 
 ### Project setup
 
-Some of project components should be reusable, like the English dictionary and
-even the Quartiles solver, so we want to separate these out from the text-based
-user interface that we will write in part three of this blog series.
+Some of the project components should be reusable, like the English dictionary
+and even the Quartiles solver, so we want to separate these out from the
+text-based user interface that we will write in part three of this blog series.
 
 We want to end up with two crates, one binary crate and one library crate, each
 with the name `quartiles-solver`. So let's set up our project thus:
@@ -592,11 +592,11 @@ flowchart TB
 	make_text_path --> read_text --> write_binary --> return
 ```
 
-In words, look for a file named `{dict}/{name}.dict`, treating it as a
+In words, look for a file named `{dir}/{name}.dict`, treating it as a
 serialized dictionary if it exists. If it does, great, use it. If it doesn't,
-look for a file named `{dict}/{name}.txt`, treating it as a plaintext English
+look for a file named `{dir}/{name}.txt`, treating it as a plaintext English
 word list. Build the dictionary from the text file, then write out the
-serialized form to `{dict}/{name}.dict` for some future pass through this
+serialized form to `{dir}/{name}.dict` for some future pass through this
 algorithm. The happy paths all lead to a ready-to-go `Dictionary`.
 
 To make sure that everything works, we add some basic unit tests, which you can

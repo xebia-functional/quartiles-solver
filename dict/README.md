@@ -24,8 +24,6 @@ Copyright 2000-2019 by Kevin Atkinson
   "as is" without express or implied warranty.
 ```
 
-http://wordlist.aspell.net/
-
 Word list was post-processed to:
 
 1. Remove proper nouns (really, anything with a majuscule character other than
