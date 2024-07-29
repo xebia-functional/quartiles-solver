@@ -1,4 +1,4 @@
-# Quartiles: Part I
+# Quartiles Solver: Part I
 
 In this three-part series and the associated
 [project](https://github.com/xebia-functional/quartiles-solver), we are going to
@@ -89,10 +89,10 @@ permits codification of an optimal _strategy_, and it so happens that this
 strategy can always solve the game in 5 moves
 [on easy](https://codegolf.stackexchange.com/a/242412/73123) and 6 moves
 [on hard](https://gist.github.com/zags/a093467ee6e71fd35ff849a5b76f22e5). But of
-course, the correct answer has to be spoonfed into the algorithm, or the correct
-feedback must be provided after each guess; without these concessions, there is
-no way to uncover the secret, because there is no way to ascertain whether an
-algorithm is moving toward the answer or away from it.
+course, the correct answer has to be spoon-fed into the algorithm, or the
+correct feedback must be provided after each guess; without these concessions,
+there is no way to uncover the secret, because there is no way to ascertain
+whether an algorithm is moving toward the answer or away from it.
 
 By contrast, Quartiles is more like
 [Boggle](https://en.wikipedia.org/wiki/Boggle). Assuming that the player is
@@ -229,7 +229,8 @@ $$
 \sum_{k=1}^4 P(20,k) &= P(20,1) + P(20,2) + P(20,3) + P(20,4) \\
 	&= 20 + 380 + 6840 + 116280 \\
 	&= 123520
-\end{align*}$$
+\end{align*}
+$$
 
 There are "just" $123520$ ways to arrange up to $4$ tiles from our game board of
 $20$. We wouldn't want to search this space manually, but computers are
