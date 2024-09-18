@@ -2,7 +2,14 @@
 //!
 //! Herein is the solver for the Quartiles game.
 
-use std::{collections::HashSet, ops::{Index, IndexMut}, rc::Rc, time::{Duration, Instant}};
+use std::{
+	collections::HashSet,
+	error::Error,
+	fmt::{self, Display, Formatter},
+	ops::{Index, IndexMut},
+	rc::Rc,
+	time::{Duration, Instant}
+};
 
 use fixedstr::{str32, str8};
 use log::{debug, trace};
@@ -353,7 +360,7 @@ pub struct FragmentPath([Option<usize>; 4]);
 impl FragmentPath
 {
 	/// Get an iterator over the fragment indices in the fragment path. The
-	/// iterator yields `None` for any unused fragment indices
+	/// iterator yields `None` for any unused fragment indices.
 	///
 	/// # Returns
 	///
@@ -407,7 +414,8 @@ impl FragmentPath
 		}
 		else
 		{
-			let i = self.0.iter()
+			// Find the index of the rightmost occupant.
+			let rightmost = self.0.iter()
 				.rposition(|&index| index.is_some())
 				.map(|i| i as i32)
 				.unwrap_or(-1);
@@ -415,16 +423,71 @@ impl FragmentPath
 			let used = HashSet::<usize>::from_iter(
 				self.0.iter().flatten().copied()
 			);
-			// Determine the start index for the rightmost fragment index.
+			// Determine the start index for the new fragment index.
 			let mut start_index = 0;
 			while used.contains(&start_index)
 			{
 				start_index += 1;
 			}
 			// Append the next fragment index.
-			let mut next = *self;
-			next[(i + 1) as usize] = Some(start_index);
-			Ok(next)
+			let mut fragment = *self;
+			fragment[(rightmost + 1) as usize] = Some(start_index);
+			Ok(fragment)
+		}
+	}
+
+	/// Increment the rightmost fragment index in the fragment path, using the
+	/// other fragment indices as uniqueness constraints. The result is always
+	/// a [valid](Self::is_disjoint) fragment path.
+	///
+	/// # Returns
+	///
+	/// The fragment path with the rightmost fragment index incremented.
+	///
+	/// # Errors
+	///
+	/// * [`FragmentPathError::CannotIncrementEmpty`] if the fragment path is
+	///   empty.
+	/// * [`FragmentPathError::IndexOverflow`] if the rightmost fragment index
+	///   is already at the maximum value.
+	fn increment(&self) -> Result<Self, FragmentPathError>
+	{
+		// Find the index of the rightmost occupant.
+		let rightmost = self.0.iter()
+			.rposition(|&index| index.is_some())
+			.ok_or(FragmentPathError::CannotIncrementEmpty)?;
+		// Determine which fragment indices are unavailable. Use all but the
+		// last fragment index, because the last fragment index is the one that
+		// is incremented.
+		let used = HashSet::<usize>::from_iter(
+			self.0.iter().take(rightmost).flatten().copied()
+		);
+		// Determine the stop index for the rightmost fragment index.
+		let mut stop_index = 19;
+		while used.contains(&stop_index)
+		{
+			stop_index -= 1;
+		}
+		let mut fragment = *self;
+		loop
+		{
+			if fragment[rightmost] >= Some(stop_index)
+			{
+				// The rightmost fragment index is already at (or beyond) the
+				// maximum value, so report an overflow.
+				return Err(FragmentPathError::IndexOverflow)
+			}
+			else
+			{
+				// Increment the rightmost fragment index.
+				let next = fragment[rightmost].unwrap() + 1;
+				fragment[rightmost] = Some(next);
+				if !used.contains(&next)
+				{
+					// The incremented fragment index is available, so use it.
+					return Ok(fragment)
+				}
+			}
 		}
 	}
 
@@ -446,63 +509,11 @@ impl FragmentPath
 		else
 		{
 			let mut indices = self.0;
-			let i = indices.iter().rposition(|&index| index.is_some()).unwrap();
-			indices[i] = None;
+			let rightmost = indices.iter()
+				.rposition(|&index| index.is_some())
+				.unwrap();
+			indices[rightmost] = None;
 			Ok(Self(indices))
-		}
-	}
-
-	/// Increment the rightmost fragment index in the fragment path, using the
-	/// other fragment indices as uniqueness constraints. The result is always
-	/// a [valid](Self::is_disjoint) fragment path.
-	///
-	/// # Returns
-	///
-	/// The fragment path with the rightmost fragment index incremented.
-	///
-	/// # Errors
-	///
-	/// * [`FragmentPathError::CannotIncrementEmpty`] if the fragment path is
-	///   empty.
-	/// * [`FragmentPathError::IndexOverflow`] if the rightmost fragment index
-	///   is already at the maximum value.
-	fn increment(&self) -> Result<Self, FragmentPathError>
-	{
-		let i = self.0.iter()
-			.rposition(|&index| index.is_some())
-			.ok_or(FragmentPathError::CannotIncrementEmpty)?;
-		// Determine which fragment indices are unavailable. Use all but the
-		// last fragment index, because the last fragment index is the one that
-		// is incremented.
-		let used = HashSet::<usize>::from_iter(
-			self.0.iter().take(i).flatten().copied()
-		);
-		// Determine the stop index for the rightmost fragment index.
-		let mut stop_index = 19;
-		while used.contains(&stop_index)
-		{
-			stop_index -= 1;
-		}
-		let mut fragment = *self;
-		loop
-		{
-			if fragment[i] >= Some(stop_index)
-			{
-				// The rightmost fragment index is already at (or beyond) the
-				// maximum value, so report an overflow.
-				return Err(FragmentPathError::IndexOverflow)
-			}
-			else
-			{
-				// Increment the rightmost fragment index.
-				let next = fragment[i].unwrap() + 1;
-				fragment[i] = Some(next);
-				if !used.contains(&next)
-				{
-					// The incremented fragment index is available, so use it.
-					return Ok(fragment)
-				}
-			}
 		}
 	}
 
@@ -616,6 +627,23 @@ enum FragmentPathError
 	CannotIncrementEmpty
 }
 
+impl Display for FragmentPathError
+{
+	fn fmt(&self, f: &mut Formatter) -> fmt::Result
+	{
+		match self
+		{
+			Self::Overflow => write!(f, "fragment path is already full"),
+			Self::Underflow => write!(f, "fragment path is already empty"),
+			Self::IndexOverflow =>
+				write!(f, "fragment index is already at maximum"),
+			Self::CannotIncrementEmpty => write!(f, "fragment path is empty")
+		}
+	}
+}
+
+impl Error for FragmentPathError {}
+
 ////////////////////////////////////////////////////////////////////////////////
 //                                   Tests.                                   //
 ////////////////////////////////////////////////////////////////////////////////
@@ -624,8 +652,10 @@ enum FragmentPathError
 mod test
 {
 	use std::{collections::HashSet, rc::Rc};
-
-use crate::{dictionary::Dictionary, solver::{FragmentPath, FragmentPathError, Solver}};
+	use crate::{
+		dictionary::Dictionary,
+		solver::{FragmentPath, FragmentPathError, Solver}
+	};
 	use fixedstr::{str32, str8};
 
 	/// Ensure that appending a fragment index to a fragment path works for all
@@ -1057,7 +1087,7 @@ use crate::{dictionary::Dictionary, solver::{FragmentPath, FragmentPathError, So
 		];
 		for (fragments, expected) in cases.iter()
 		{
-			let solver = Solver::new(dictionary.clone(), *fragments);
+			let solver = Solver::new(Rc::clone(&dictionary), *fragments);
 			let solver = solver.solve_fully();
 			assert!(solver.is_finished());
 			assert!(solver.is_solved());

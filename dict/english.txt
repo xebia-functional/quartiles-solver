@@ -66060,7 +66060,6 @@ sphincters
 sphinges
 sphinx
 sphinxes
-spic
 spice
 spiced
 spices
@@ -66071,7 +66070,6 @@ spiciness
 spicing
 spick
 spicks
-spics
 spicule
 spicules
 spicy

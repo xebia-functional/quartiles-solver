@@ -22,10 +22,13 @@
 		"dwyl",
 		"fixedstr",
 		"ijkl",
+		"interruptible",
 		"Mathlandia",
 		"ment",
 		"obrace",
+		"popcrement",
 		"ratatui",
-		"rposition"
+		"rposition",
+		"usize"
 	]
 }
