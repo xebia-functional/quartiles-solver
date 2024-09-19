@@ -577,12 +577,19 @@ Here's an illustration of the algorithm, simplified to disregard failure modes:
 ```mermaid
 flowchart TB
 	make_binary_path("Make binary path:\nbin ← dir + name + .dict")
-	exists{Binary\nexists?}
+	exists([Binary exists])
 	read_binary("deserialize_from_file(bin)")
-	make_text_path("Make text path:\ntxt ← dir + name + .txt")
+	make_text_path("Make text path:
+	txt ← dir + name + .txt")
 	read_text("read_from_file(txt)")
 	write_binary("serialize_to_file(bin)")
-	return(Return\ndictionary)
+	return[[dictionary]]
+
+	classDef test fill:#666666,color:#ffffff
+	class exists test
+
+	classDef return fill:#3333ff,color:#ffffff
+	class return return
 
 	make_binary_path --> exists
 
@@ -821,10 +828,10 @@ points during our journey.
 ## Design considerations for the solver
 
 Armed with a fast dictionary amenable to prefix searching, we're ready to
-consider what we want out of application as a whole:
+consider what we want out of the application as a whole:
 
-1. The application will be a text-based user interface (TUI) running on a single
-   thread.
+1. The application will be a text-based user interface (TUI) _running on a single
+   thread_.
 2. Good user experience (UX) design requires that the user interface (UI)
    _remain responsive_ to the user at all times.
 3. Furthermore, good UX design requires that ongoing computation must
@@ -835,9 +842,9 @@ heart and soul of this application, how do these application design goals guide
 us in setting _solver design goals_?
 
 1. Recalling the upper bound that we computed in Part I, there are $123520$
-   possible permutations of the board that correspond to well-formed quartiles,
-   we see that this is likely too much work to satisfy application design goal
-   #2 (the UI must remain responsive). This implies that the solver should be
+   possible permutations of the board that correspond to well-formed quartiles.
+   This is possibly too much work to satisfy application design goal #2 (the UI
+   must remain responsive). This implies that the solver should be
    _interruptible_.
 2. But the solver _does_ need to run until it has found all of the words on the
    board, which means that the solver needs to be _resumable_. Interruptible and
@@ -845,15 +852,17 @@ us in setting _solver design goals_?
    resume an algorithm, it's just stoppage!
 3. As we just mentioned, the solver should find every word in the intersection
    of the board and the dictionary, so it should be _exhaustive_.
-4. The solver shouldn't be a total black box. It should be _informative_,
+4. Perhaps obvious, but the solver should _terminate_ for every possible input.
+   We'll see below that there are plenty of opportunities to fail at this one.
+5. The solver shouldn't be a total black box. It should be _informative_,
    communicating its discoveries to the UI, pursuant to application design goal
    #3 (computational progress should be shown).
-5. We want to run the whole application on a single thread and there'll be a
+6. We want to run the whole application on a single thread and there'll be a
    user hanging on for a solution, so the solver should be _fast_. Finishing in
-   hundreds of milliseconds should be plenty fast enough.
-6. In furtherance of being fast, the solver should be _efficient_, only
+   hundreds of milliseconds should be plenty fast enough in meat time.
+7. In furtherance of being fast, the solver should be _efficient_, only
    processing each permutation a single time.
-7. Lastly, we want freedom in how we write tests and benchmarks for our solver,
+8. Lastly, we want freedom in how we write tests and benchmarks for our solver,
    so the solver should be _deterministic_. Given the same board and dictionary,
    the solver should perform the same steps in the same order every time that it
    runs, modulo some variance in timings. It should at least examine the same
@@ -861,18 +870,18 @@ us in setting _solver design goals_?
    the same times.
 
 Whew, sounds like a lot of design goals. And it is, but, with care and cunning,
-they are simultaneously achievable. Let's go through them each, building as we
-go.
+they are simultaneously achievable.
 
 ## Exploring the state space
 
 In order to _continue_ an algorithm we need some kind of _continuation_: a
 snapshot of the complete _machine state_ required to represent the activity of
-the algorithm at some point in time. Without looking at the algorithm yet, let's
-consider what we need in terms of machine state for a Quartiles solver.
+the algorithm at some interruptible checkpoint. Without looking at the algorithm
+yet, let's consider what we need in terms of machine state for a Quartiles
+solver.
 
 The Quartiles solver is essentially a state space explorer. The state space
-comprises the set of $4$-permutations of the $20$-tile board. In other words,
+comprises the set of $4$-permutations of the $20$-tile board: in other words,
 every possible permutation of 1 to 4 tiles, where each tile is a word fragment.
 So if we think of this state space like a result set from some hypothetical
 database table, what we need is a _cursor_ capable of traversing the complete
@@ -881,18 +890,18 @@ iterate through linearly, because, well, we made up that result set.
 
 But the idea of the cursor is incredibly useful. If the cursor doesn't have a
 stream of records to move back and forth over, then what _does_ the cursor's
-motion look like? Let's play with the state space for a moment, imagining how we
-might traverse it manually.
+motion look like? Let's play with the state space, imagining how we might
+traverse it manually.
 
 We'll abstract away the word fragments for the moment and just consider that we
 have 20 of _something_, each of which is uniquely denoted by the labels $0$
-through $19$ ($[0,19]$). We want to obtain the 1-, 2-, 3-, and 4-permutations of
-these 20 elements. Let's represent our cursor using tuple notation, e.g.,
-$(i_0)$, $(i_0, i_1)$, $(i_0, i_1, i_2)$, $(i_0, i_1, i_2, i_3)$, etc., where
-each component $i_n$ represents one of the $20$ elements. We can technically pick
-any point in the state space as the origin for the cursor, but it's very useful
-to choose the first element, so that makes $(0)$ be the initial position of the
-cursor.
+through $19$ ($[0,19]$). We want to obtain the $1$-, $2$-, $3$-, and
+$4$-permutations of these $20$ elements. Let's represent our cursor using tuple
+notation, e.g., $(i_0)$, $(i_0, i_1)$, $(i_0, i_1, i_2)$, $(i_0, i_1, i_2,
+i_3)$, etc., where each component $i_n$ represents one of the $20$ elements. We
+can technically pick any point in the state space as the origin for the cursor,
+but it's very useful to choose the $1$-tuple containing the first element, so
+that makes $(0)$ be the initial position of the cursor.
 
 So how does the cursor move? Well, there are several axes of motion:
 
@@ -901,33 +910,29 @@ So how does the cursor move? Well, there are several axes of motion:
 * If there are $>1$ elements, we can _pop_ a component:
   $(i_0, i_1) \Rightarrow (i_0)$
 * We can vary any component in place, but we only have to _increment_ if we
-  always start at $0$: $(i_0) \Rightarrow (i_0 + 1)$
+  always start the component at $0$: $(i_0) \Rightarrow (i_0 + 1)$
 
 So we effectively have five dimensions of motion: _append_ and _pop_ operate on
 the length of the tuple (one dimension), while _increment_ operates on the
-individual coordinates (four dimensions). That sounds like a lot, but the
-individual motions are very simple. Furthermore, we can add some simplifying
-constraints:
+individual components (four dimensions). That sounds like a lot of dimensions,
+but the individual motions are very simple. Furthermore, we can add some
+simplifying constraints:
 
 1. We prioritize _append_ over any other motion.
 2. We prioritize _increment_ over _pop_.
 3. We ensure that _pop_ is fused to a subsequent _increment_
    (to avoid repetition of cursor state).
 4. We only _increment_ the rightmost component.
-5. We only _append_ the lowest unrepresented component, i.e.,
-   $(i_0) \Rightarrow (i_0, i_1)$ is acceptable, but
-   $(i_0) \Rightarrow (i_0, i_0)$ is forbidden.
-6. We always _increment_ enough to ensure the uniqueness of each component,
-   i.e., $(0, 1) \Rightarrow (0, 2)$ is acceptable, but
-   $(0, 1) \Rightarrow (1, 1)$ is forbidden.
+5. We ensure that all components are disjoint, i.e., $(i_0, i_1)$ is acceptable,
+   but $(i_0, i_0)$ is forbidden.
 
 Recall that the uniqueness constraint stems directly from the rules of
 Quartiles: the same tile cannot be used twice in the same word.
 
 Putting it all together, let's see how our cursor works. In the table below, we
 track the step number (of the full exploration), the motion to perform, and the
-cursor after the motion occurs. For brevity, let's examine a 5-element space
-rather than a 20-element space. Here we go!
+cursor after the motion occurs. For simplicity, let's examine a $6$-element space
+rather than a $20$-element space. Here we go!
 
 | Step# | Motion          | Cursor         |
 |-------|-----------------|----------------|
@@ -946,12 +951,17 @@ rather than a 20-element space. Here we go!
 | 12    | increment       | $(0, 1, 4, 3)$ |
 | 13    | increment       | $(0, 1, 4, 5)$ |
 | 14    | pop + increment | $(0, 1, 5)$    |
+| 15    | append          | $(0, 1, 5, 2)$ |
+| 16    | increment       | $(0, 1, 5, 3)$ |
+| 17    | increment       | $(0, 1, 5, 4)$ |
+| 18    | pop + increment | $(0, 2)$       |
 
 Obviously this goes on much longer, but this should be enough to see how the
-cursor traverses the state space. Consider what happens in step #6 if we only
-_pop_. The cursor would be $(0, 1, 2)$: a regression to its state in step #2.
-Not only would this be redundant, but it would also be an infinite loop! So
-_pop_ is out, but _pop_ + _increment_ is in: _popcrement_, if you will!
+cursor traverses the state space. Consider what happens in step #6 if we just
+_pop_ without the fused _increment_. The cursor would be $(0, 1, 2)$: a
+regression to its state in step #2. Not only would this be redundant, but it
+would also be an infinite loop! So _pop_ is out, but _pop_ + _increment_ is in:
+_popcrement_, if you will!
 
 Looks good so far, but let's think about the cursor's endgame. What happens
 when _popcrement_ would have to increment the rightmost component out of bounds?
@@ -962,9 +972,9 @@ denouement:
 
 | Motion          | Cursor         |
 |-----------------|----------------|
-| increment       | $(6, 5, 4, 1)$ |
-| increment       | $(6, 5, 4, 2)$ |
-| increment       | $(6, 5, 4, 3)$ |
+| append          | $(5, 4, 3, 0)$ |
+| increment       | $(5, 4, 3, 1)$ |
+| increment       | $(5, 4, 3, 2)$ |
 | popcrement      | $()$           |
 
 Boom, _popcrement_ vacated the entire tuple! Based on our definitions above,
@@ -976,14 +986,18 @@ We now have a cursor and rules that ensure exhaustive traversal of our state
 space, which means that we now have a continuation for our solver algorithm: the
 cursor itself is our continuation. The solver can always return the next cursor
 to process, and we can start and stop the solver wherever we please. Abstractly,
-we have ensured that the solver is both interruptible and resumable.
+we have ensured that the solver is interruptible, resumable, exhaustive,
+efficient, and deterministic. Hot dog, that's already $5$ of our design goals!
 
 ### `FragmentPath`
 
 Good design is always the hard part, so now let's write some code. Connecting
 the cursor back to its purpose, which is tracking which tiles of the Quartiles
-board are selected and in which order, we settle on the name `FragmentPath` to
-denote this concept.
+board are selected and in what order, we settle on the name `FragmentPath` to
+denote this concept. Everything related to the `FragmentPath` can be found in
+[`src/solver.rs`](https://github.com/xebia-functional/quartiles-solver/blob/main/src/solver.rs#L349),
+so check it out if you want to see the inline comments or all of the code at
+once.
 
 ```rust
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -993,24 +1007,24 @@ pub struct FragmentPath([Option<usize>; 4]);
 
 We could use a Rust tuple for the payload of the `FragmentPath`, but it would
 make some of the implementation rather inconvenient. A fixed-sized array of
-$4$ suits us better, where each element is an optional index into some Quartiles
-board somewhere. `None` represents an vacancy in the cursor, and all `None`s
-must be clustered together on the right. We can thus represent $(0, 1)$
+$4$ suits us better, where each element is an optional index into the Quartiles
+board that we want to solve. `None` represents an vacancy in the cursor, and all
+`None`s must be clustered together on the right. We can thus represent $(0, 1)$
 straightforwardly as:
 
 ```rust
 FragmentPath([Some(0), Some(1), None, None])
 ```
 
-Note the `must_use` attribute. Continuations are notoriously easy to drop and
-forget along some paths of control, so this reduces the risk of that. Now the
-compiler will ensure that we actually do something with a `FragmentPath` other
-than just forget about it.
+Note the `must_use` attribute. Continuations are notoriously easy to ignore
+along some paths of control, so this reduces the risk of that. Now the compiler
+will ensure that we actually do something with a `FragmentPath` instead of just
+forgetting about it.
 
 #### Iteration
 
-At some point, we're going to need to iterate through the board indices enclosed
-by a `FragmentPath`, so let's make it iterable:
+At some point, we're going to need to traverse the board indices enclosed by a
+`FragmentPath`, so let's make it iterable:
 
 ```rust
 pub fn iter(&self) -> impl Iterator<Item = Option<usize>> + '_
@@ -1019,7 +1033,7 @@ pub fn iter(&self) -> impl Iterator<Item = Option<usize>> + '_
 }
 ```
 
-The board indices are simply `usize`, so we answer an `Iterator` that will copy
+The board indices are simply `usize`s, so we answer an `Iterator` that will copy
 them. The anonymous lifetime (`'_`) indicates that the returned `Iterator` is
 borrowing from `self`, which is plain from the implementation. I'm excited that
 this particular piece of line noise is going away in
@@ -1028,7 +1042,7 @@ this particular piece of line noise is going away in
 #### Occupancy
 
 We also need to know about vacancies in the `FragmentPath`, specifically whether
-it's empty (the sentinel condition) or full.
+it's empty (the sentinel condition we identified above) or full.
 
 ```rust
 pub fn is_empty(&self) -> bool
@@ -1042,8 +1056,8 @@ pub fn is_full(&self) -> bool
 }
 ```
 
-Since maintain the invariant that all `Nones` have to be clustered on the right,
-these are sufficient implementations.
+Since we carefully maintain the invariant that all `Nones` have to be clustered
+on the right, these are sufficient implementations.
 
 #### Accessing
 
@@ -1087,14 +1101,16 @@ enum FragmentPathError
 }
 ```
 
-* `Overflow`: Indicates that some `FragmentPath` was full, so append failed.
-* `Underflow`: Indicates that some `FragmentPath` was empty, so pop failed.
+* `Overflow`: Indicates that some `FragmentPath` was full, so _append_ failed.
+* `Underflow`: Indicates that some `FragmentPath` was empty, so _pop_ failed.
 * `IndexOverflow`: Indicates that the rightmost component of some`FragmentPath`
-  was already at the maximum board index, so increment failed.
+  was already at the maximum unique board index, so _increment_ failed.
 * `CannotIncrementEmpty`: Indicates that some `FragmentPath` was empty, so
-  increment failed.
+  _increment_ failed.
 
-That's it, that's all that can go wrong. Finally, onward to cursor motion!
+That's all that can go wrong, and we're going to use these error conditions in
+the solver algorithm itself, not just at the interface boundary. Finally, onward
+to cursor motion!
 
 #### Append
 
@@ -1201,7 +1217,6 @@ fn increment(&self) -> Result<Self, FragmentPathError>
 		}
 		else
 		{
-			// Increment the rightmost fragment index.
 			let next = fragment[rightmost].unwrap() + 1;
 			fragment[rightmost] = Some(next);
 			if !used.contains(&next)
@@ -1214,7 +1229,7 @@ fn increment(&self) -> Result<Self, FragmentPathError>
 ```
 
 Counting never looked so hard, did it? Well, nothing makes counting look even
-harder than introducing a flowchart, so here it is:
+harder than introducing a flowchart to explain it, but here it is anyway:
 
 ```mermaid
 flowchart TB
@@ -1271,11 +1286,12 @@ the tools to take it apart:
    index not already present in the `FragmentPath`.
 5. Copy the `FragmentPath` for use as an accumulator.
 6. Iteratively increment the rightmost component, until either:
-   * The stop index is met.
-   * An unused board index is discovered.
+   * The stop index is met, in which case we must signal index overflow.
+   * An unused board index is discovered, in which case we can return the new
+     `FragmentPath`.
 
 This is so tricky because we need to ensure that all of the board indices
-enclosed by a `FragmentPath` must remain disjoint. This is an invariant that we
+enclosed by a `FragmentPath` remain disjoint. This is an invariant that we
 carefully maintain at the boundaries of the API, and one that is central to
 ensuring an exhaustive, efficient traversal of the state space.
 
@@ -1327,9 +1343,9 @@ fn pop_and_increment(&self) -> Result<Self, FragmentPathError>
 }
 ```
 
-Completely straightforward, so there's nothing worth explaining here. I even had
-the good taste to named it `pop_and_increment`. There might still be some hope
-for me after all!
+The only thing worth noting here is that `IndexOverflow` causes another
+component to be popped. I even had the good taste to name it
+`pop_and_increment`. There might still be some hope for me after all!
 
 #### Mapping `FragmentPath`s to English words
 
@@ -1352,17 +1368,18 @@ fn word(&self, fragments: &[str8; 20]) -> str32
 `str8` and `str32` are string types from the popular
 [`fixedstr`](https://crates.io/crates/fixedstr) crate, which provides efficient,
 copyable, fixed-sized strings. Instances of `str8` allocate exactly $8$ bytes of
-character data on the stack, and it follows directly what `str32` provides. To
-date, Quartiles puzzles have only used fragments between 2 and 4 characters
-long, but we can't read Apple's mind, so we give ourselves some wiggle room.
-Since each of our fragments is at most $8$ bytes, $32$ bytes is enough to hold
-$4$ of them.
+character data on the stack, and it follows directly what `str32` does. To date,
+Quartiles puzzles have only used fragments between 2 and 4 characters long, but
+we can't read Apple's mind, so we give ourselves some wiggle room. Since each of
+our fragments is at most $8$ bytes, $32$ bytes is enough to hold $4$ of them.
 
 ### `Solver`
 
 All right, we know how to orient ourselves in the state space. `FragmentPath` in
-hand, we can now resume the solver resume. Now we need a solver to resume. We
-start with the data structure itself:
+hand, we can now resume the solver. But first we need a solver to resume. Refer
+to
+[`src/solver.rs`](https://github.com/xebia-functional/quartiles-solver/blob/main/src/solver.rs#L19)
+to see the inline comments. We start with the data structure itself:
 
 ```rust
 #[derive(Clone, Debug)]
@@ -1377,24 +1394,25 @@ pub struct Solver
 }
 ```
 
-* `dictionary`: This is the English dictionary to use for solving the puzzle.
-  The dictionary is big, and the application will end up holding onto it in
-  multiple places, so we use `std::rc::Rc` to ensure that we can avoid cloning
-  it repeatedly.
-* `fragments`: This is the Quartiles game board, as an array of fragments in
-  row-major order. Note that `fragments` matches the eponymous parameter in
+* `dictionary`: The English dictionary to use for solving the puzzle. The
+  dictionary is big, and the application will end up holding onto it in multiple
+  places, so we use `std::rc::Rc` to ensure that we can avoid cloning it
+  repeatedly.
+* `fragments`: The Quartiles game board, as an array of fragments in row-major
+  order. Note that `fragments` matches the eponymous parameter in
   `FragmentPath::word`.
-* `path`: This is the next position in the state space to explore. When the
-  solver resumes, it will resume here.
-* `solution`: This is the accumulator for the solution. A _solution_ comprises
-  the $5$ quartiles themselves plus any other words discovered during the
-  traversal of the state space.
-* `is_finished`: This is a flag that indicates whether the solver has completed.
-  When `true`, `solution` contains a complete solution to the Quartiles puzzle.
-  If the user entered a board that wasn't canon, i.e., it didn't come from the
+* `path`: The next position in the state space to explore. When the solver
+  resumes, it will resume here.
+* `solution`: The accumulator for the solution. A _solution_ comprises the $5$
+  quartiles themselves plus any other words discovered during the traversal of
+  the state space.
+* `is_finished`: The flag that indicates whether the solver has completed. When
+  `true`, `solution` contains a complete solution to the Quartiles puzzle. If
+  the user entered a board that wasn't canon, i.e., it didn't come from the
   official Quartiles game, then this might be `true` and `solution` might _not_
   contain $5$ Quartiles. This would be the case if, for example, the user
-  entered the same fragment in all $20$ cells.
+  entered the same fragment multiple times, which seems to be forbidden for
+  official boards.
 
 #### Construction
 
@@ -1428,7 +1446,7 @@ pub fn is_finished(&self) -> bool
 
 As mentioned above, this really only tells us that the solver ran to completion,
 not whether it produced a valid solution. We'd like to be able to report to the
-user when we encounter an unsolvable puzzle, as this indicates that the user
+user when we encounter an unsolvable puzzle, as this may indicate that the user
 entered the puzzle incorrectly or provided an insufficiently robust dictionary.
 So let's write a method to ascertain whether a solution is valid:
 
@@ -1459,7 +1477,7 @@ pub fn is_solved(&self) -> bool
 Breaking it down:
 
 1. We can't know whether the puzzle is solved unless the solver is finished.
-2. Check for $>= 5$ words comprising $4$ fragments. An official puzzle will hide
+2. Check for $\ge 5$ words comprising $4$ fragments. An official puzzle will hide
    exactly $5$ such words.
 3. To support unofficial puzzles, we further ensure that every fragment is
    actually used uniquely by one of the quartiles.
@@ -1506,8 +1524,8 @@ pub fn solution(&self) -> Vec<str32>
 #### Solving Quartiles puzzles
 
 Enough stalling! We've established the design goals and we've seen all of the
-building blocks. At last we are ready to write the algorithm to solve Quartiles
-puzzles. Behold!
+building blocks. At last we are ready to write the mighty algorithm to solve
+Quartiles puzzles. Behold!
 
 ```rust
 pub fn solve(mut self, duration: Duration) -> (Self, Option<FragmentPath>)
@@ -1516,7 +1534,7 @@ pub fn solve(mut self, duration: Duration) -> (Self, Option<FragmentPath>)
 	{
 		return (self, None)
 	}
-	let start = Instant::now();
+	let start_time = Instant::now();
 	let mut found_word = false;
 	loop
 	{
@@ -1534,11 +1552,7 @@ pub fn solve(mut self, duration: Duration) -> (Self, Option<FragmentPath>)
 				{
 					self.path = path;
 				}
-				Err(FragmentPathError::Overflow) =>
-				{
-					// The fragment path is already full, so there's nothing
-					// to do here. Just continue the algorithm.
-				}
+				Err(FragmentPathError::Overflow) => {}
 				Err(_) => unreachable!()
 			}
 		}
@@ -1574,7 +1588,7 @@ pub fn solve(mut self, duration: Duration) -> (Self, Option<FragmentPath>)
 			let word = *self.solution.last().unwrap();
 			return (self, Some(word))
 		}
-		let elapsed = Instant::now().duration_since(start);
+		let elapsed = Instant::now().duration_since(start_time);
 		if elapsed >= duration
 		{
 			return (self, None)
@@ -1584,7 +1598,7 @@ pub fn solve(mut self, duration: Duration) -> (Self, Option<FragmentPath>)
 ```
 
 The implementation isn't huge, but it _is_ tricky, which is not surprising for
-a state space explorer that needs to satisfy all $7$ of the design goals that we
+a state space explorer that needs to satisfy all $8$ of the design goals that we
 set for it.
 
 We'll start with an examination of the interface. This is a method of `Solver`,
@@ -1608,13 +1622,13 @@ flowchart TB
 	is_finished(["is_finished?"])
 	finished[["(self, None)"]]
 
-	initialize("start := now
+	initialize("start_time := now
 	found_word := false")
 
-	loop_head("start_path := current_path")
-	contains_word(["current_word ∈ dictionary"])
-	found_word("word = current_word
-	solution += current_path")
+	loop_head("start_path&nbsp;:=&nbsp;current_path")
+	contains_word(["current_word&nbsp;∈&nbsp;dictionary"])
+	found_word("word&nbsp;:=&nbsp;current_word
+	solution&nbsp;+=&nbsp;current_path")
 
 	contains_prefix(["current_word
 	is prefix in
@@ -1626,12 +1640,12 @@ flowchart TB
 	increment(["incremented&nbsp;:=&nbsp;increment"])
 	increment_ok("current_path&nbsp;:=&nbsp;incremented")
 	popcrement(["popped&nbsp;:=&nbsp;pop_and_increment"])
-	popcrement_ok("current_path := popped")
+	popcrement_ok("current_path&nbsp;:=&nbsp;popped")
 	done("is_finished := true")
 
 	did_find_word(["found_word?"])
 	next_word[["(self, Some(word))"]]
-	is_expired(["now ≥ start + duration"])
+	is_expired(["now&nbsp;≥&nbsp;start_time&nbsp;+&nbsp;duration"])
 
 	classDef test fill:#666666,color:#ffffff
 	class is_finished test
@@ -1681,14 +1695,16 @@ First, we check to see if the solver has already run to completion. If it has,
 then we simply exit. Running `solve` on a solved `Solver` should be idempotent.
 
 Now we recall that we want to make at least one pass through the algorithm to
-ensure incremental progress toward completion. We note the current time, but we
-don't act on this information yet. We also create a flag to track whether we've
-found a word during this invocation. We need to handle solution augmentation
-separately from state space exploration, and this flag will help with that.
+ensure incremental progress toward completion; this is required to ensure that
+the algorithm terminates for every possible input, which was one of our design
+goals. We note the current time (`start`), but we don't act on this information
+yet. We also create a flag (`found_word`) to track whether we've found a word
+during this invocation. We need to handle solution augmentation separately from
+state space exploration, and this flag will help with that.
 
-At the loop head, we capture the current path as `start_path`. We use the
-captured value below to determine which of the five axes of exploration we are
-going to traverse.
+At the loop head, we capture the current `FragmentPath` (`start_path`). We use
+the captured value below to determine which of the $5$ axes of exploration we
+are going to traverse.
 
 The next couple of blocks interrogate the dictionary. The first of these looks
 the current word up directly. If it's present, then we extend the solution to
@@ -1699,16 +1715,18 @@ this same word again: an infinite loop.
 
 The second dictionary interrogation is how we deliver the search space pruning
 that we promised back in Part I. We treat the current word as a prefix into the
-dictionary, asking the dictionary whether it knows any words that start this
-way. If it does, then we use the _append_ algorithm on the current
-`FragmentPath`. If _append_ succeeds, then we advance the cursor accordingly.
+dictionary, asking the dictionary whether it knows any words that begin this
+way. If it doesn't, then we fall through to prune this part of the search space
+altogether. But if it does, then we use the _append_ algorithm on the current
+ `FragmentPath`. If _append_ succeeds, then we advance the cursor accordingly.
 But if _append_ overflows, we simply fall through this block to continue the
 algorithm.
 
 If _append_ succeeded, then `start_path` no longer agrees with the current path,
 which means that we have successfully updated the cursor; we can therefore skip
 over this huge block, because we _must not_ advance the cursor multiple times
-without querying the dictionary in between.
+without querying the dictionary in between. The algorithm would fail to be
+exhaustive, and potentially miss valid words.
 
 If _append_ failed, then the cursor hasn't moved yet, and we still need to
 ensure some kind of motion. So we try the _increment_ algorithm on the current
@@ -1726,7 +1744,7 @@ circuit through the loop.
 But if neither _increment_ nor _popcrement_ succeeded, then something more
 interesting than moving the cursor has occurred: we have finished the algorithm
 completely! We set `is_finished` and return control as our way of pronouncing
-"done" upon the solution. Phew.
+"done" upon the algorithm and the solution. Phew.
 
 ## Testing
 
@@ -1784,18 +1802,18 @@ fn test_solver()
 `fragments` contains an official Quartiles puzzle. I played the game to reach
 100 points, which unlocked the option to show all words found by the official
 dictionary. `expected` is that word list. Because the official dictionary is
-likely different that the one that I bundled with the application, we test
+very likely different than the one that I bundled with the application, we test
 only whether the expected solution is a subset of the actual solution found by
 the solver.
 
-I wrote quite a few tests other than this one, testing all of the edge cases of
+I wrote quite a few tests other than this one, testing all of the modalities of
 the different cursor motions and so forth. Check them out in the
 [project](https://github.com/xebia-functional/quartiles-solver/blob/main/src/solver.rs#L647).
 
 ## Performance
 
-If you recall design goal #4 (the solver should be fast), we decided that the
-solver could take hundreds of milliseconds and still be plenty fast enough.
+If you recall solver design goal #6 (the solver should be fast), we decided that
+the solver could take hundreds of milliseconds and still be plenty fast enough.
 Hundreds of milliseconds is perceptible to a user, but feels snappy.
 
 So how did we do? Here's an excerpt of the report produced by `cargo bench` for

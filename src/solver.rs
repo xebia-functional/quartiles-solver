@@ -150,7 +150,7 @@ impl Solver
 
 		// Start the timer. Loop until the timer expires or a single valid word
 		// is discovered.
-		let start = Instant::now();
+		let start_time = Instant::now();
 		let mut found_word = false;
 		loop
 		{
@@ -264,7 +264,7 @@ impl Solver
 				return (self, Some(word))
 			}
 
-			let elapsed = Instant::now().duration_since(start);
+			let elapsed = Instant::now().duration_since(start_time);
 			if elapsed >= duration
 			{
 				// The solver has run out of time, so return the current
