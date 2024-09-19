@@ -1744,7 +1744,8 @@ circuit through the loop.
 But if neither _increment_ nor _popcrement_ succeeded, then something more
 interesting than moving the cursor has occurred: we have finished the algorithm
 completely! We set `is_finished` and return control as our way of pronouncing
-"done" upon the algorithm and the solution. Phew.
+"done" upon the algorithm and the solution. We hit all $8$ of our solver design
+goals. Phew.
 
 ## Testing
 
@@ -1814,7 +1815,8 @@ the different cursor motions and so forth. Check them out in the
 
 If you recall solver design goal #6 (the solver should be fast), we decided that
 the solver could take hundreds of milliseconds and still be plenty fast enough.
-Hundreds of milliseconds is perceptible to a user, but feels snappy.
+Hundreds of milliseconds is perceptible to a user, but feels snappy for
+something like solving a whole puzzle.
 
 So how did we do? Here's an excerpt of the report produced by `cargo bench` for
 my hardware:
