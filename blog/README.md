@@ -931,8 +931,8 @@ Quartiles: the same tile cannot be used twice in the same word.
 
 Putting it all together, let's see how our cursor works. In the table below, we
 track the step number (of the full exploration), the motion to perform, and the
-cursor after the motion occurs. For simplicity, let's examine a $6$-element space
-rather than a $20$-element space. Here we go!
+cursor after the motion occurs. For simplicity, let's examine a $6$-element
+space rather than a $20$-element space. Here we go!
 
 | Step# | Motion          | Cursor         |
 |-------|-----------------|----------------|
@@ -1191,7 +1191,7 @@ Now it's quite tractable:
 
 #### Increment
 
-Increment is the most common motion for our cursor, and it is tragically also
+_Increment_ is the most common motion for our cursor, and it is tragically also
 the most complex motion:
 
 ```rust
@@ -1297,7 +1297,7 @@ ensuring an exhaustive, efficient traversal of the state space.
 
 #### Pop…crement?
 
-Pop turns out to be easy. So easy that I think it's safe to forego the
+_Pop_ turns out to be easy. So easy that I think it's safe to forego the
 flowchart. Voilà:
 
 ```rust
@@ -1477,8 +1477,8 @@ pub fn is_solved(&self) -> bool
 Breaking it down:
 
 1. We can't know whether the puzzle is solved unless the solver is finished.
-2. Check for $\ge 5$ words comprising $4$ fragments. An official puzzle will hide
-   exactly $5$ such words.
+2. Check for $\ge 5$ words comprising $4$ fragments. An official puzzle will
+   hide exactly $5$ such words.
 3. To support unofficial puzzles, we further ensure that every fragment is
    actually used uniquely by one of the quartiles.
 
@@ -1835,3 +1835,15 @@ terrific performance that we achieved, right?
 And that's all for this installment. Next time we'll build the text-based user
 interface (TUI) and finally have the finished application! Stay tuned, because
 Part III is on its way! Thanks again for your time!
+
+# Quartiles Solver: Part III
+
+In the first part of this three-part series, we developed the English dictionary
+for a
+[Quartiles](https://www.apple.com/newsroom/2024/05/apple-news-plus-introduces-quartiles-a-new-game-and-offline-mode-for-subscribers/)
+solver. In the second part, we developed the algorithm for solving Quartiles
+puzzles. In this post, the third and final part of the three-part series, we
+build the text-based user interface (TUI) that brings the whole application
+together. You may wish to check out the
+[project](https://github.com/xebia-functional/quartiles-solver) at various
+points during our journey.

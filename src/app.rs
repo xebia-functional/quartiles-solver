@@ -9,7 +9,7 @@ use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyMo
 use fixedstr::str8;
 use quartiles_solver::{dictionary::Dictionary, solver::{FragmentPath, Solver}};
 use ratatui::{
-	buffer::Buffer, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::Text, widgets::{
+	buffer::Buffer, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Text}, widgets::{
 		block::{Position, Title},
 		Block, BorderType, Borders, List, ListState, Paragraph,
 		StatefulWidget, Widget, Wrap
@@ -286,120 +286,62 @@ impl App
 	fn render_populating(&self, area: Rect, buf: &mut Buffer)
 	{
 		// Split the screen into two parts: the puzzle and the solution.
-		let outer = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(1)
-			.constraints([
-				Constraint::Percentage(100),
-				Constraint::Min(20)
-			])
-			.split(area);
+		let outer = self.split_outer_screen(area);
 		// The puzzle comprises a 4×5 grid of cells.
-		let board = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(3)
-			.constraints([
-				Constraint::Ratio(1, 3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Ratio(1, 3)
-			])
-			.split(outer[0]);
-		Block::default()
-			.borders(Borders::ALL)
-			.border_style(Style::default().fg(Color::White))
-			.title(
-				Title::default()
-					.content("Puzzle")
-					.position(Position::Top)
-					.alignment(Alignment::Center)
-			)
-			.title(
-				Title::default()
-					.content("⎋ – exit".yellow().bold())
-					.position(Position::Top)
-					.alignment(Alignment::Left)
-			)
-			.title(
-				Title::default()
-					.content("↵ – solve".green().bold())
-					.position(Position::Top)
-					.alignment(Alignment::Right)
-			)
-			.title(
-				Title::default()
-					.content(
-						"\
-							←↑↓→ - move \
-							⇥ - next \
-							⇧⇥ - previous \
-							A-Z - edit \
-							⌫ - delete \
-							⌦ - clear\
-						".cyan()
-					)
-					.position(Position::Bottom)
-					.alignment(Alignment::Center)
-			)
-			.render(outer[0], buf);
-		// Build all of the cells.
-		let cells = self.cells.iter().enumerate()
-			.map(|(index, cell)| {
-				let cell_style =
-					if index == self.current_index()
-					{
-						Style::default()
-							.fg(Color::Black)
-							.bg(Color::Cyan)
-					}
-					else
-					{
-						Style::default()
-					};
-				let border_color =
-					if cell.is_empty() { Color::Red }
-					else { Color::White };
-				let block = Block::new()
-					.border_type(BorderType::Rounded)
-					.borders(Borders::ALL)
-					.border_style(Style::default().fg(border_color));
-				let cell = Paragraph::new(cell.as_str())
-					.block(block)
-					.alignment(Alignment::Left)
-					.style(cell_style)
-					.wrap(Wrap { trim: true });
-				cell
-			})
-			.collect::<Vec<_>>();
-		// Lay out the cells in a 4×5 grid.
-		cells.chunks_exact(4).enumerate()
-			.for_each(|(index, chunk)| {
-				let row = Layout::default()
-					.direction(Direction::Horizontal)
-					.constraints([
-						Constraint::Min(10),
-						Constraint::Min(10),
-						Constraint::Min(10),
-						Constraint::Min(10)
-					])
-					.split(board[index + 1]);
-				for (column, cell) in chunk.iter().enumerate()
+		let board = self.split_board(outer[0]);
+		// Render the board.
+		self.render_board(
+			outer[0],
+			buf,
+			Some(
+				"\
+					←↑↓→ - move \
+					⇥ - next \
+					⇧⇥ - previous \
+					A-Z - edit \
+					⌫ - delete \
+					⌦ - clear\
+				".cyan()
+			),
+			Some("↵ – solve".green().bold())
+		);
+		// Render all of the cells.
+		self.render_cells(board, buf, |index, cell| {
+			let cell_style =
+				if index == self.current_index()
 				{
-					cell.render(row[column], buf);
+					Style::default()
+						.fg(Color::Black)
+						.bg(Color::Cyan)
 				}
-			});
-		// The solution is a simple word list.
-		let list = List::default()
-			.block(
-				Block::default()
-					.title("Solution")
-					.title_alignment(Alignment::Center)
-					.borders(Borders::ALL)
-			);
-		Widget::render(list, outer[1], buf);
+				else
+				{
+					Style::default()
+				};
+			let border_color =
+				if cell.is_empty() { Color::Red }
+				else { Color::White };
+			let block = Block::new()
+				.border_type(BorderType::Rounded)
+				.borders(Borders::ALL)
+				.border_style(Style::default().fg(border_color));
+			let cell = Paragraph::new(cell.as_str())
+				.block(block)
+				.alignment(Alignment::Left)
+				.style(cell_style)
+				.wrap(Wrap { trim: true });
+			cell
+		});
+		// Render the empty solution.
+		self.render_solution_list(
+			outer[1],
+			buf,
+			None,
+			Some(None),
+			None::<&str>,
+			None,
+			None
+		);
 	}
 
 	/// Render the [solving](ExecutionState::Solving) UI.
@@ -412,48 +354,14 @@ impl App
 	fn render_solving(&self, area: Rect, buf: &mut Buffer, solver: &Solver)
 	{
 		// Split the screen into two parts: the puzzle and the solution.
-		let outer = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(1)
-			.constraints([
-				Constraint::Percentage(100),
-				Constraint::Min(20)
-			])
-			.split(area);
+		let outer = self.split_outer_screen(area);
 		// The puzzle comprises a 4×5 grid of cells.
-		let board = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(3)
-			.constraints([
-				Constraint::Ratio(1, 3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Ratio(1, 3)
-			])
-			.split(outer[0]);
-		Block::default()
-			.borders(Borders::ALL)
-			.border_style(Style::default().fg(Color::White))
-			.title(
-				Title::default()
-					.content("Puzzle")
-					.position(Position::Top)
-					.alignment(Alignment::Center)
-			)
-			.title(
-				Title::default()
-					.content("⎋ – exit".yellow().bold())
-					.position(Position::Top)
-					.alignment(Alignment::Left)
-			)
-			.render(outer[0], buf);
-		// Build all of the cells.
-		let cells = self.cells.iter()
-			.map(|cell| {
-				let block = Block::new()
+		let board = self.split_board(outer[0]);
+		// Render the board.
+		self.render_board(outer[0], buf, None::<&str>, None::<&str>);
+		// Render all of the cells.
+		self.render_cells(board, buf, |_, cell| {
+			let block = Block::new()
 					.border_type(BorderType::Rounded)
 					.borders(Borders::ALL)
 					.border_style(Style::default().fg(Color::White));
@@ -463,36 +371,17 @@ impl App
 					.style(Style::default())
 					.wrap(Wrap { trim: true });
 				cell
-			})
-			.collect::<Vec<_>>();
-		// Lay out the cells in a 4×5 grid.
-		cells.chunks_exact(4).enumerate()
-			.for_each(|(index, chunk)| {
-				let row = Layout::default()
-					.direction(Direction::Horizontal)
-					.constraints([
-						Constraint::Min(10),
-						Constraint::Min(10),
-						Constraint::Min(10),
-						Constraint::Min(10)
-					])
-					.split(board[index + 1]);
-				for (column, cell) in chunk.iter().enumerate()
-				{
-					cell.render(row[column], buf);
-				}
-			});
-		// The solution is a simple word list.
-		let list = List::new(self.solution_list(solver))
-			.block(
-				Block::default()
-					.title("Solution")
-					.title_alignment(Alignment::Center)
-					.borders(Borders::ALL)
-			)
-			.style(Style::default().fg(Color::White))
-			.highlight_style(Style::default().fg(Color::Yellow));
-		Widget::render(&list, outer[1], buf);
+		});
+		// Render the solution.
+		self.render_solution_list(
+			outer[1],
+			buf,
+			Some(solver),
+			None,
+			None::<&str>,
+			Some(Style::default().fg(Color::White)),
+			None
+		);
 	}
 
 	/// Render a [highlighting](ExecutionState::Highlighting) UI.
@@ -511,123 +400,66 @@ impl App
 		path: &FragmentPath
 	) {
 		// Split the screen into two parts: the puzzle and the solution.
-		let outer = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(1)
-			.constraints([
-				Constraint::Percentage(100),
-				Constraint::Min(20)
-			])
-			.split(area);
+		let outer = self.split_outer_screen(area);
 		// The puzzle comprises a 4×5 grid of cells.
-		let board = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(3)
-			.constraints([
-				Constraint::Ratio(1, 3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Length(3),
-				Constraint::Ratio(1, 3)
-			])
-			.split(outer[0]);
-		Block::default()
-			.borders(Borders::ALL)
-			.border_style(Style::default().fg(Color::White))
-			.title(
-				Title::default()
-					.content("Puzzle")
-					.position(Position::Top)
-					.alignment(Alignment::Center)
-			)
-			.title(
-				Title::default()
-					.content("⎋ – exit".yellow().bold())
-					.position(Position::Top)
-					.alignment(Alignment::Left)
-			)
-			.render(outer[0], buf);
+		let board = self.split_board(outer[0]);
+		self.render_board(outer[0], buf, None::<&str>, None::<&str>);
 		// Build all of the cells.
-		let cells = self.cells.iter().enumerate()
-			.map(|(index, cell)| {
-				let in_fragment = path.iter()
-					.any(|i| matches!(i, Some(x) if x == index));
-				let border_color =
-					if in_fragment { Color::Black }
-					else { Color::White };
-				let block = Block::new()
-					.border_type(BorderType::Rounded)
-					.borders(Borders::ALL)
-					.border_style(Style::default().fg(border_color));
-				let cell =
-					if in_fragment
-					{
-						let index_in_fragment = path.iter()
-							.position(|i| matches!(i, Some(x) if x == index))
-							.unwrap();
-						let label = format!(
-							"{} {}",
-							index_in_fragment + 1,
-							cell.as_str()
-						);
-						Paragraph::new(label)
-							.block(block)
-							.alignment(Alignment::Left)
-							.style(
-								Style::default()
-									.fg(Color::Black)
-									.bg(Color::Green)
-							)
-							.wrap(Wrap { trim: true })
-					}
-					else
-					{
-						Paragraph::new(cell.as_str())
-							.block(block)
-							.alignment(Alignment::Left)
-							.style(Style::default())
-							.wrap(Wrap { trim: true })
-					};
-				cell
-			})
-			.collect::<Vec<_>>();
-		// Lay out the cells in a 4×5 grid.
-		cells.chunks_exact(4).enumerate()
-			.for_each(|(index, chunk)| {
-				let row = Layout::default()
-					.direction(Direction::Horizontal)
-					.constraints([
-						Constraint::Min(10),
-						Constraint::Min(10),
-						Constraint::Min(10),
-						Constraint::Min(10)
-					])
-					.split(board[index + 1]);
-				for (column, cell) in chunk.iter().enumerate()
+		self.render_cells(board, buf, |index, cell| {
+			let in_fragment = path.iter()
+				.any(|i| matches!(i, Some(x) if x == index));
+			let border_color =
+				if in_fragment { Color::Black }
+				else { Color::White };
+			let block = Block::new()
+				.border_type(BorderType::Rounded)
+				.borders(Borders::ALL)
+				.border_style(Style::default().fg(border_color));
+			let cell =
+				if in_fragment
 				{
-					cell.render(row[column], buf);
+					let index_in_fragment = path.iter()
+						.position(|i| matches!(i, Some(x) if x == index))
+						.unwrap();
+					let label = format!(
+						"{} {}",
+						index_in_fragment + 1,
+						cell.as_str()
+					);
+					Paragraph::new(label)
+						.block(block)
+						.alignment(Alignment::Left)
+						.style(
+							Style::default()
+								.fg(Color::Black)
+								.bg(Color::Green)
+						)
+						.wrap(Wrap { trim: true })
 				}
-			});
-		// The solution is a simple word list. Colorize the quartiles. Highlight
-		// the last word, which corresponds to the argument fragment path.
-		let mut list_state = ListState::default();
-		list_state.select(Some(solver.solution().len() - 1));
-		let list = List::new(self.solution_list(solver))
-			.block(
-				Block::default()
-					.title("Solution")
-					.title_alignment(Alignment::Center)
-					.borders(Borders::ALL)
+				else
+				{
+					Paragraph::new(cell.as_str())
+						.block(block)
+						.alignment(Alignment::Left)
+						.style(Style::default())
+						.wrap(Wrap { trim: true })
+				};
+			cell
+		});
+		// Render the solution. Colorize the quartiles. Highlight the last word,
+		// which corresponds to the argument fragment path.
+		self.render_solution_list(
+			outer[1],
+			buf,
+			Some(solver),
+			None,
+			None::<&str>,
+			Some(Style::default().fg(Color::White)),
+			Some(Style::default()
+				.fg(Color::Black)
+				.bg(Color::Green)
 			)
-			.style(Style::default().fg(Color::White))
-			.highlight_style(
-				Style::default()
-					.fg(Color::Black)
-					.bg(Color::Green)
-				);
-		StatefulWidget::render(&list, outer[1], buf, &mut list_state);
+		);
 	}
 
 	/// Render the [finished](ExecutionState::Finished) UI.
@@ -648,16 +480,83 @@ impl App
 		highlight: Option<usize>
 	) {
 		// Split the screen into two parts: the puzzle and the solution.
-		let outer = Layout::default()
+		let outer = self.split_outer_screen(area);
+		// The puzzle comprises a 4×5 grid of cells.
+		let board = self.split_board(outer[0]);
+		self.render_board(
+			outer[0],
+			buf,
+			Some(
+				if is_solved { "✓ Solved".green().bold() }
+				else { "✗ No solution".red().bold() }
+			),
+			None::<&str>
+		);
+		// Render all of the cells.
+		self.render_cells(board, buf, |_, cell| {
+			let block = Block::new()
+				.border_type(BorderType::Rounded)
+				.borders(Borders::ALL)
+				.border_style(Style::default().fg(Color::White));
+			let cell = Paragraph::new(cell.as_str())
+				.block(block)
+				.alignment(Alignment::Left)
+				.style(Style::default())
+				.wrap(Wrap { trim: true });
+			cell
+		});
+		// Render the solution. Colorize the quartiles. Highlight the selected
+		// word.
+		self.render_solution_list(
+			outer[1],
+			buf,
+			Some(solver),
+			Some(highlight),
+			Some("↑↓ - move".cyan()),
+			Some(Style::default().fg(Color::White)),
+			Some(
+				Style::default()
+				.fg(Color::Black)
+				.bg(Color::Cyan)
+			)
+		);
+	}
+
+	/// Split the specified area into two parts: the puzzle and the solution.
+	///
+	/// # Arguments
+	///
+	/// * `area` - The target area to split. This will be the complete screen
+	///   available to the application.
+	///
+	/// # Returns
+	///
+	/// The split areas.
+	fn split_outer_screen(&self, area: Rect) -> Rc<[Rect]>
+	{
+		Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(1)
 			.constraints([
 				Constraint::Percentage(100),
 				Constraint::Min(20)
 			])
-			.split(area);
-		// The puzzle comprises a 4×5 grid of cells.
-		let board = Layout::default()
+			.split(area)
+	}
+
+	/// Split the specified area into rows: two margins and 5 central
+	/// rows.
+	///
+	/// # Arguments
+	///
+	/// * `area` - The target area to split.
+	///
+	/// # Returns
+	///
+	/// The split areas.
+	fn split_board(&self, area: Rect) -> Rc<[Rect]>
+	{
+		Layout::default()
 			.direction(Direction::Vertical)
 			.margin(3)
 			.constraints([
@@ -669,8 +568,26 @@ impl App
 				Constraint::Length(3),
 				Constraint::Ratio(1, 3)
 			])
-			.split(outer[0]);
-		Block::default()
+			.split(area)
+	}
+
+	/// Render the board, with optional titles at the bottom center and top
+	/// right.
+	///
+	/// # Arguments
+	///
+	/// * `area` - The target area.
+	/// * `buf` - The target buffer.
+	/// * `bottom_center` - The title to render at the bottom center.
+	/// * `top_right` - The title to render at the top right.
+	fn render_board<'a>(
+		&self,
+		area: Rect,
+		buf: &mut Buffer,
+		bottom_center: Option<impl Into<Line<'a>>>,
+		top_right: Option<impl Into<Line<'a>>>
+	) {
+		let mut block = Block::default()
 			.borders(Borders::ALL)
 			.border_style(Style::default().fg(Color::White))
 			.title(
@@ -684,37 +601,45 @@ impl App
 					.content("⎋ – exit".yellow().bold())
 					.position(Position::Top)
 					.alignment(Alignment::Left)
-			)
-			.title(
+			);
+		if let Some(title) = bottom_center
+		{
+			block = block.title(
 				Title::default()
-					.content(
-						if is_solved
-						{
-							"✓ Solved".green().bold()
-						}
-						else
-						{
-							"✗ No solution".red().bold()
-						}
-					)
+					.content(title)
 					.position(Position::Bottom)
 					.alignment(Alignment::Center)
-			)
-			.render(outer[0], buf);
-		// Build all of the cells.
-		let cells = self.cells.iter()
-			.map(|cell| {
-				let block = Block::new()
-					.border_type(BorderType::Rounded)
-					.borders(Borders::ALL)
-					.border_style(Style::default().fg(Color::White));
-				let cell = Paragraph::new(cell.as_str())
-					.block(block)
-					.alignment(Alignment::Left)
-					.style(Style::default())
-					.wrap(Wrap { trim: true });
-				cell
-			})
+			);
+		}
+		if let Some(title) = top_right
+		{
+			block = block.title(
+				Title::default()
+					.content(title)
+					.position(Position::Top)
+					.alignment(Alignment::Right)
+			);
+		}
+		block.render(area, buf);
+	}
+
+	/// Render the cells of the board.
+	///
+	/// # Arguments
+	///
+	/// * `board` - The board area, as a margin, followed by 5 rows, followed by
+	///   another margin.
+	/// * `buf` - The target buffer.
+	/// * `cell_builder` - A function that builds a cell from an index and a
+	///   string.
+	fn render_cells(
+		&self,
+		board: Rc<[Rect]>,
+		buf: &mut Buffer,
+		cell_builder: impl Fn(usize, &str8) -> Paragraph<'_>
+	) {
+		let cells = self.cells.iter().enumerate()
+			.map(|(index, cell)| cell_builder(index, cell))
 			.collect::<Vec<_>>();
 		// Lay out the cells in a 4×5 grid.
 		cells.chunks_exact(4).enumerate()
@@ -733,33 +658,6 @@ impl App
 					cell.render(row[column], buf);
 				}
 			});
-		// The solution is a simple word list. Colorize the quartiles. Highlight
-		// the selected word.
-		let mut list_state = ListState::default();
-		list_state.select(highlight);
-		let list = List::new(self.solution_list(solver))
-			.block(
-				Block::default()
-					.borders(Borders::ALL)
-					.title(
-						Title::default()
-							.content("Solution")
-							.alignment(Alignment::Center)
-					)
-					.title(
-						Title::default()
-							.content("↑↓ - move".cyan())
-							.position(Position::Bottom)
-							.alignment(Alignment::Center)
-					)
-			)
-			.style(Style::default().fg(Color::White))
-			.highlight_style(
-				Style::default()
-					.fg(Color::Black)
-					.bg(Color::Cyan)
-				);
-		StatefulWidget::render(&list, outer[1], buf, &mut list_state);
 	}
 
 	/// Construct a solution list from the solver, providing colorization based
@@ -796,6 +694,81 @@ impl App
 				}
 			})
 			.collect()
+	}
+
+	/// Render the solution list.
+	///
+	/// # Arguments
+	///
+	/// * `area` - The target area.
+	/// * `buf` - The target buffer.
+	/// * `solver` - The solver, which is only used in some application states.
+	/// * `highlight` - The optional index of the highlighted item. If `None`,
+	///   use the last item. If the inner `Option` is `None`, do not highlight
+	///   any item.
+	/// * `bottom_center` - The optional title to render at the bottom center.
+	/// * `style` - The optional base style to apply to the list.
+	/// * `highlight_style` - The optional style to apply to the highlighted
+	///   item.
+	#[allow(clippy::too_many_arguments)]
+	fn render_solution_list<'a>(
+		&self,
+		area: Rect,
+		buf: &mut Buffer,
+		solver: Option<&Solver>,
+		highlight: Option<Option<usize>>,
+		bottom_center: Option<impl Into<Line<'a>>>,
+		style: Option<Style>,
+		highlight_style: Option<Style>
+	) {
+		let list = match solver
+		{
+			None => List::default(),
+			Some(solver) => List::new(self.solution_list(solver))
+		};
+		let list = list
+			.block({
+				let block = Block::default()
+					.borders(Borders::ALL)
+					.title(
+						Title::default()
+							.content("Solution")
+							.alignment(Alignment::Center)
+					);
+				match bottom_center
+				{
+					None => block,
+					Some(title) => block.title(
+						Title::default()
+							.content(title)
+							.position(Position::Bottom)
+							.alignment(Alignment::Center)
+					)
+				}
+			});
+		let list = match style
+		{
+			None => list,
+			Some(style) => list.style(style)
+		};
+		let list = match highlight_style
+		{
+			None => list,
+			Some(highlight_style) => list.highlight_style(highlight_style)
+		};
+		let mut list_state = ListState::default();
+		if let Some(solver) = solver
+		{
+			if let Some(highlight) = highlight
+			{
+				list_state.select(highlight);
+			}
+			else
+			{
+				list_state.select(Some(solver.solution().len() - 1));
+			}
+		}
+		StatefulWidget::render(&list, area, buf, &mut list_state);
 	}
 
 	/// Run any background tasks, such as the solver or the highlighter.
@@ -861,7 +834,8 @@ impl App
 	fn run_highlighter(&mut self)
 	{
 		// Take care to evacuate the application state in order to keep the
-		// borrow happy while juggling state ownership and mutable references.
+		// borrow checker happy while juggling state ownership and mutable
+		// references.
 		let mut state = ExecutionState::Swapping;
 		swap(&mut self.state, &mut state);
 		if let ExecutionState::Highlighting { solver, until, path } = state
