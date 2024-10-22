@@ -818,7 +818,6 @@ adieus
 adieux
 adios
 adipose
-adj
 adjacency
 adjacent
 adjacently
@@ -1009,7 +1008,6 @@ adumbrated
 adumbrates
 adumbrating
 adumbration
-adv
 advance
 advanced
 advancement
@@ -2137,7 +2135,6 @@ amputation
 amputations
 amputee
 amputees
-amt
 amuck
 amulet
 amulets
@@ -2521,7 +2518,6 @@ anorexia
 anorexic
 anorexics
 another
-ans
 answer
 answerable
 answered
@@ -3369,7 +3365,6 @@ arouses
 arousing
 arpeggio
 arpeggios
-arr
 arraign
 arraigned
 arraigning
@@ -4230,7 +4225,6 @@ autoworkers
 autumn
 autumnal
 autumns
-aux
 auxiliaries
 auxiliary
 auxin
@@ -4276,7 +4270,6 @@ avert
 averted
 averting
 averts
-avg
 avian
 aviaries
 aviary
@@ -9280,7 +9273,6 @@ cakes
 cakewalk
 cakewalks
 caking
-cal
 calabash
 calabashes
 calaboose
@@ -11845,7 +11837,6 @@ cipher
 ciphered
 ciphering
 ciphers
-cir
 circa
 circadian
 circle
@@ -11934,7 +11925,6 @@ cissies
 cissy
 cistern
 cisterns
-cit
 citadel
 citadels
 citation
@@ -13101,7 +13091,6 @@ columned
 columnist
 columnists
 columns
-com
 coma
 comaker
 comakers
@@ -17881,7 +17870,6 @@ defuses
 defusing
 defy
 defying
-deg
 degas
 degases
 degassed
@@ -20969,7 +20957,6 @@ dorms
 dorsal
 dorsally
 dory
-dos
 dosage
 dosages
 dose
@@ -21171,7 +21158,6 @@ doyen
 doyenne
 doyennes
 doyens
-doz
 doze
 dozed
 dozen
@@ -21184,7 +21170,6 @@ dozily
 doziness
 dozing
 dozy
-dpi
 drab
 drabber
 drabbest
@@ -21560,7 +21545,6 @@ dryest
 drying
 dryly
 dryness
-drys
 drywall
 dual
 dualism
@@ -22149,8 +22133,6 @@ editorials
 editors
 editorship
 edits
-eds
-educ
 educability
 educable
 educate
@@ -22753,8 +22735,6 @@ emeritus
 emery
 emetic
 emetics
-emf
-emfs
 emigrant
 emigrants
 emigrate
@@ -22875,7 +22855,6 @@ emptiness
 empty
 emptying
 empyrean
-ems
 emu
 emulate
 emulated
@@ -22925,7 +22904,6 @@ enamor
 enamored
 enamoring
 enamors
-enc
 encamp
 encamped
 encamping
@@ -23325,7 +23303,6 @@ enrolls
 enrolment
 enrolments
 enrols
-ens
 ensconce
 ensconced
 ensconces
@@ -23899,7 +23876,6 @@ esophagus
 esophaguses
 esoteric
 esoterically
-esp
 espadrille
 espadrilles
 espalier
@@ -23984,7 +23960,6 @@ estuaries
 estuary
 eta
 etas
-etc
 etch
 etched
 etcher
@@ -24606,7 +24581,6 @@ exotica
 exotically
 exoticism
 exotics
-exp
 expand
 expandable
 expanded
@@ -24849,7 +24823,6 @@ expurgations
 exquisite
 exquisitely
 exquisiteness
-ext
 extant
 extemporaneous
 extemporaneously
@@ -25783,7 +25756,6 @@ fenestration
 fennel
 fens
 fentanyl
-fer
 feral
 ferment
 fermentation
@@ -27109,7 +27081,6 @@ foist
 foisted
 foisting
 foists
-fol
 fold
 foldaway
 folded
@@ -28457,7 +28428,6 @@ fustier
 fustiest
 fustiness
 fusty
-fut
 futile
 futilely
 futility
@@ -28491,7 +28461,6 @@ fuzzily
 fuzziness
 fuzzing
 fuzzy
-fwy
 gab
 gabardine
 gabardines
@@ -29031,7 +29000,6 @@ gemology
 gems
 gemstone
 gemstones
-gen
 gendarme
 gendarmes
 gender
@@ -30068,7 +30036,6 @@ gout
 goutier
 goutiest
 gouty
-gov
 govern
 governable
 governance
@@ -32436,7 +32403,6 @@ hers
 herself
 hertz
 hertzes
-hes
 hesitance
 hesitancy
 hesitant
@@ -32485,7 +32451,6 @@ hexing
 hey
 heyday
 heydays
-hgwy
 hi
 hiatus
 hiatuses
@@ -32747,7 +32712,6 @@ hiveminds
 hives
 hiving
 hiya
-ho
 hoagie
 hoagies
 hoagy
@@ -32802,7 +32766,6 @@ hobo
 hoboes
 hobos
 hobs
-hoc
 hock
 hocked
 hockey
@@ -33300,7 +33263,6 @@ horticulturalist
 horticulture
 horticulturist
 horticulturists
-hos
 hosanna
 hosannas
 hose
@@ -33806,7 +33768,6 @@ huzzahing
 huzzahs
 huzzaing
 huzzas
-hwy
 hyacinth
 hyacinths
 hyaena
@@ -34922,7 +34883,6 @@ inbreed
 inbreeding
 inbreeds
 inbuilt
-inc
 incalculable
 incalculably
 incandescence
@@ -35019,7 +34979,6 @@ incites
 inciting
 incivilities
 incivility
-incl
 inclemency
 inclement
 inclination
@@ -35207,7 +35166,6 @@ incurring
 incurs
 incursion
 incursions
-ind
 indebted
 indebtedness
 indecencies
@@ -35524,7 +35482,6 @@ inexpressive
 inextinguishable
 inextricable
 inextricably
-inf
 infallibility
 infallible
 infallibly
@@ -36298,7 +36255,6 @@ insurrectionist
 insurrectionists
 insurrections
 insusceptible
-int
 intact
 intagli
 intaglio
@@ -37142,7 +37098,6 @@ is
 ischemia
 ischemic
 isinglass
-isl
 island
 islander
 islanders
@@ -39992,7 +39947,6 @@ lipstick
 lipsticked
 lipsticking
 lipsticks
-liq
 liquefaction
 liquefied
 liquefies
@@ -40867,9 +40821,8 @@ lutenist
 lutenists
 lutes
 lutetium
-luv
-luvs
 luvvie
+luvviedom
 luvvies
 lux
 luxuriance
@@ -41789,7 +41742,6 @@ marvelously
 marvels
 marzipan
 mas
-masc
 mascara
 mascaraed
 mascaraing
@@ -42561,7 +42513,6 @@ merry
 merrymaker
 merrymakers
 merrymaking
-mes
 mesa
 mesas
 mescal
@@ -44323,7 +44274,6 @@ mortises
 mortising
 mortuaries
 mortuary
-mos
 mosaic
 mosaics
 mosey
@@ -44763,7 +44713,6 @@ mummify
 mummifying
 mummy
 mumps
-mun
 munch
 munched
 munches
@@ -45012,7 +44961,6 @@ myrmidons
 myrrh
 myrtle
 myrtles
-mys
 myself
 mysteries
 mysterious
@@ -45954,7 +45902,6 @@ nominator
 nominators
 nominee
 nominees
-non
 nonabrasive
 nonabsorbent
 nonabsorbents
@@ -46762,7 +46709,6 @@ obit
 obits
 obituaries
 obituary
-obj
 object
 objected
 objectification
@@ -46829,7 +46775,6 @@ oboe
 oboes
 oboist
 oboists
-obs
 obscene
 obscenely
 obscener
@@ -47000,7 +46945,6 @@ oceanology
 oceans
 ocelot
 ocelots
-och
 ocher
 ochre
 ocker
@@ -47412,7 +47356,6 @@ opioids
 opium
 opossum
 opossums
-opp
 opponent
 opponents
 opportune
@@ -51029,7 +50972,6 @@ phylacteries
 phylactery
 phylogeny
 phylum
-phys
 physic
 physical
 physicality
@@ -51559,7 +51501,6 @@ pizzerias
 pizzicati
 pizzicato
 pizzicatos
-pkwy
 placard
 placarded
 placarding
@@ -55089,7 +55030,6 @@ pythons
 pyx
 pyxes
 pzazz
-qty
 qua
 quack
 quacked
@@ -57735,7 +57675,6 @@ rekindle
 rekindled
 rekindles
 rekindling
-rel
 relabel
 relabeled
 relabeling
@@ -58493,7 +58432,6 @@ rerouting
 rerun
 rerunning
 reruns
-res
 resalable
 resale
 resales
@@ -59668,7 +59606,6 @@ rituals
 ritzier
 ritziest
 ritzy
-riv
 rival
 rivaled
 rivaling
@@ -60145,7 +60082,6 @@ royally
 royals
 royalties
 royalty
-rte
 rub
 rubati
 rubato
@@ -61409,7 +61345,6 @@ schusses
 schussing
 schwa
 schwas
-sci
 sciatic
 sciatica
 science
@@ -62443,7 +62378,6 @@ sepulchered
 sepulchering
 sepulchers
 sepulchral
-seq
 sequel
 sequels
 sequence
@@ -65575,7 +65509,6 @@ sortieing
 sorties
 sorting
 sorts
-sos
 sot
 sots
 sottish
@@ -69528,7 +69461,6 @@ symptom
 symptomatic
 symptomatically
 symptoms
-syn
 synagog
 synagogal
 synagogs
@@ -70369,7 +70301,6 @@ teetotaller
 teetotallers
 tektite
 tektites
-tel
 telecast
 telecasted
 telecaster
@@ -71075,7 +71006,6 @@ thistle
 thistledown
 thistles
 thither
-tho
 thole
 tholes
 thong
@@ -73760,7 +73690,6 @@ ugliest
 ugliness
 ugly
 uh
-uhf
 ukase
 ukases
 ukelele
@@ -73782,7 +73711,6 @@ ulnar
 ulnas
 ulster
 ulsters
-ult
 ulterior
 ultimata
 ultimate
@@ -74810,7 +74738,6 @@ unhurried
 unhurriedly
 unhurt
 unhygienic
-uni
 unicameral
 unicellular
 unicorn
@@ -75898,7 +75825,6 @@ usherettes
 ushering
 ushers
 using
-usu
 usual
 usually
 usurer
@@ -76022,7 +75948,6 @@ vainglorious
 vaingloriously
 vainglory
 vainly
-val
 valance
 valances
 vale
@@ -76150,7 +76075,6 @@ vapors
 vapory
 vaquero
 vaqueros
-var
 variability
 variable
 variables
@@ -76915,7 +76839,6 @@ vixen
 vixenish
 vixenishly
 vixens
-viz
 vizier
 viziers
 vizir
@@ -76974,7 +76897,6 @@ voiding
 voids
 voila
 voile
-vol
 volatile
 volatility
 volatilize
@@ -78784,14 +78706,12 @@ wive
 wived
 wives
 wiving
-wiz
 wizard
 wizardry
 wizards
 wizened
 wizes
 wizzes
-wkly
 woad
 wobble
 wobbled
@@ -78811,8 +78731,6 @@ woefullest
 woefully
 woefulness
 woes
-wog
-wogs
 wok
 woke
 woken
@@ -79367,7 +79285,6 @@ yawners
 yawning
 yawns
 yaws
-yd
 ye
 yea
 yeah
@@ -79420,7 +79337,6 @@ yeomanry
 yeomen
 yep
 yeps
-yer
 yes
 yeses
 yeshiva
@@ -79440,8 +79356,6 @@ yeti
 yetis
 yew
 yews
-yid
-yids
 yield
 yielded
 yielding
@@ -79519,8 +79433,6 @@ yowl
 yowled
 yowling
 yowls
-yr
-yrs
 ytterbium
 yttrium
 yuan
@@ -79656,10 +79568,8 @@ zlotys
 zodiac
 zodiacal
 zodiacs
-zombi
 zombie
 zombies
-zombis
 zonal
 zonally
 zone
