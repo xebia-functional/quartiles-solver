@@ -7,12 +7,12 @@ authors = ["Todd L Smith <todd.smith@xebia.com>"]
 [dependencies]
 bincode = "1.3"
 clap = { version = "4.5", features = ["derive"] }
-crossterm = "0.27"
+crossterm = "0.28"
 env_logger = "0.11"
-fixedstr = { version="0.5", features = ["no-alloc"] }
+fixedstr = { version = "0.5", features = ["no-alloc"] }
 log = "0.4"
 pfx = { version = "0.4", features = ["serde"] }
-ratatui = "0.26"
+ratatui = "0.29"
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]

@@ -3,17 +3,32 @@
 //! The application state and logic, including the text-based user interface
 //! (TUI).
 
-use std::{collections::HashSet, io, mem::swap, rc::Rc, time::{Duration, Instant}};
+use std::{
+	collections::HashSet,
+	io,
+	mem::swap,
+	rc::Rc,
+	time::{Duration, Instant}
+};
 
-use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{
+	Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, poll, read
+};
 use fixedstr::str8;
-use quartiles_solver::{dictionary::Dictionary, solver::{FragmentPath, Solver}};
+use quartiles_solver::{
+	dictionary::Dictionary,
+	solver::{FragmentPath, Solver}
+};
 use ratatui::{
-	buffer::Buffer, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Text}, widgets::{
-		block::{Position, Title},
-		Block, BorderType, Borders, List, ListState, Paragraph,
-		StatefulWidget, Widget, Wrap
-	}, Frame
+	Frame,
+	buffer::Buffer,
+	layout::{Alignment, Constraint, Direction, Layout, Rect},
+	style::{Color, Style, Stylize},
+	text::{Line, Text},
+	widgets::{
+		Block, BorderType, Borders, List, ListState, Paragraph, StatefulWidget,
+		Widget, Wrap
+	}
 };
 
 use crate::tui::Tui;
@@ -172,10 +187,7 @@ impl App
 	#[inline]
 	#[must_use]
 	#[cfg(test)]
-	fn current_cell(&self) -> &str8
-	{
-		&self.cells[self.current_index()]
-	}
+	fn current_cell(&self) -> &str8 { &self.cells[self.current_index()] }
 
 	/// Get a mutable reference to the content of the current cell.
 	///
@@ -205,10 +217,7 @@ impl App
 	}
 
 	/// Clear the contents of all cells.
-	fn clear_all(&mut self)
-	{
-		self.cells.iter_mut().for_each(str8::clear);
-	}
+	fn clear_all(&mut self) { self.cells.iter_mut().for_each(str8::clear); }
 
 	/// Move the word index. If nothing is highlighted, use the sign of the
 	/// change to determine which end of the solution to start from, i.e.,
@@ -221,7 +230,11 @@ impl App
 	/// * `di` - The change in the word index.
 	fn move_word_index(&mut self, di: i8)
 	{
-		if let ExecutionState::Finished { ref solver, ref mut highlight, .. } = self.state
+		if let ExecutionState::Finished {
+			ref solver,
+			ref mut highlight,
+			..
+		} = self.state
 		{
 			let solution = solver.solution();
 			if let Some(index) = highlight
@@ -274,7 +287,7 @@ impl App
 	/// * `frame` - The target frame.
 	fn render_frame(&self, frame: &mut Frame)
 	{
-		frame.render_widget(self, frame.size());
+		frame.render_widget(self, frame.area());
 	}
 
 	/// Render the [population](ExecutionState::Populating) UI.
@@ -301,26 +314,29 @@ impl App
 					A-Z - edit \
 					⌫ - delete \
 					⌦ - clear\
-				".cyan()
+				"
+				.cyan()
 			),
 			Some("↵ – solve".green().bold())
 		);
 		// Render all of the cells.
 		self.render_cells(board, buf, |index, cell| {
-			let cell_style =
-				if index == self.current_index()
-				{
-					Style::default()
-						.fg(Color::Black)
-						.bg(Color::Cyan)
-				}
-				else
-				{
-					Style::default()
-				};
-			let border_color =
-				if cell.is_empty() { Color::Red }
-				else { Color::White };
+			let cell_style = if index == self.current_index()
+			{
+				Style::default().fg(Color::Black).bg(Color::Cyan)
+			}
+			else
+			{
+				Style::default()
+			};
+			let border_color = if cell.is_empty()
+			{
+				Color::Red
+			}
+			else
+			{
+				Color::White
+			};
 			let block = Block::new()
 				.border_type(BorderType::Rounded)
 				.borders(Borders::ALL)
@@ -362,15 +378,15 @@ impl App
 		// Render all of the cells.
 		self.render_cells(board, buf, |_, cell| {
 			let block = Block::new()
-					.border_type(BorderType::Rounded)
-					.borders(Borders::ALL)
-					.border_style(Style::default().fg(Color::White));
-				let cell = Paragraph::new(cell.as_str())
-					.block(block)
-					.alignment(Alignment::Left)
-					.style(Style::default())
-					.wrap(Wrap { trim: true });
-				cell
+				.border_type(BorderType::Rounded)
+				.borders(Borders::ALL)
+				.border_style(Style::default().fg(Color::White));
+			let cell = Paragraph::new(cell.as_str())
+				.block(block)
+				.alignment(Alignment::Left)
+				.style(Style::default())
+				.wrap(Wrap { trim: true });
+			cell
 		});
 		// Render the solution.
 		self.render_solution_list(
@@ -398,7 +414,8 @@ impl App
 		buf: &mut Buffer,
 		solver: &Solver,
 		path: &FragmentPath
-	) {
+	)
+	{
 		// Split the screen into two parts: the puzzle and the solution.
 		let outer = self.split_outer_screen(area);
 		// The puzzle comprises a 4×5 grid of cells.
@@ -406,44 +423,42 @@ impl App
 		self.render_board(outer[0], buf, None::<&str>, None::<&str>);
 		// Build all of the cells.
 		self.render_cells(board, buf, |index, cell| {
-			let in_fragment = path.iter()
-				.any(|i| matches!(i, Some(x) if x == index));
-			let border_color =
-				if in_fragment { Color::Black }
-				else { Color::White };
+			let in_fragment =
+				path.iter().any(|i| matches!(i, Some(x) if x == index));
+			let border_color = if in_fragment
+			{
+				Color::Black
+			}
+			else
+			{
+				Color::White
+			};
 			let block = Block::new()
 				.border_type(BorderType::Rounded)
 				.borders(Borders::ALL)
 				.border_style(Style::default().fg(border_color));
-			let cell =
-				if in_fragment
-				{
-					let index_in_fragment = path.iter()
-						.position(|i| matches!(i, Some(x) if x == index))
-						.unwrap();
-					let label = format!(
-						"{} {}",
-						index_in_fragment + 1,
-						cell.as_str()
-					);
-					Paragraph::new(label)
-						.block(block)
-						.alignment(Alignment::Left)
-						.style(
-							Style::default()
-								.fg(Color::Black)
-								.bg(Color::Green)
-						)
-						.wrap(Wrap { trim: true })
-				}
-				else
-				{
-					Paragraph::new(cell.as_str())
-						.block(block)
-						.alignment(Alignment::Left)
-						.style(Style::default())
-						.wrap(Wrap { trim: true })
-				};
+			let cell = if in_fragment
+			{
+				let index_in_fragment = path
+					.iter()
+					.position(|i| matches!(i, Some(x) if x == index))
+					.unwrap();
+				let label =
+					format!("{} {}", index_in_fragment + 1, cell.as_str());
+				Paragraph::new(label)
+					.block(block)
+					.alignment(Alignment::Left)
+					.style(Style::default().fg(Color::Black).bg(Color::Green))
+					.wrap(Wrap { trim: true })
+			}
+			else
+			{
+				Paragraph::new(cell.as_str())
+					.block(block)
+					.alignment(Alignment::Left)
+					.style(Style::default())
+					.wrap(Wrap { trim: true })
+			};
 			cell
 		});
 		// Render the solution. Colorize the quartiles. Highlight the last word,
@@ -455,10 +470,7 @@ impl App
 			None,
 			None::<&str>,
 			Some(Style::default().fg(Color::White)),
-			Some(Style::default()
-				.fg(Color::Black)
-				.bg(Color::Green)
-			)
+			Some(Style::default().fg(Color::Black).bg(Color::Green))
 		);
 	}
 
@@ -478,7 +490,8 @@ impl App
 		solver: &Solver,
 		is_solved: bool,
 		highlight: Option<usize>
-	) {
+	)
+	{
 		// Split the screen into two parts: the puzzle and the solution.
 		let outer = self.split_outer_screen(area);
 		// The puzzle comprises a 4×5 grid of cells.
@@ -487,8 +500,14 @@ impl App
 			outer[0],
 			buf,
 			Some(
-				if is_solved { "✓ Solved".green().bold() }
-				else { "✗ No solution".red().bold() }
+				if is_solved
+				{
+					"✓ Solved".green().bold()
+				}
+				else
+				{
+					"✗ No solution".red().bold()
+				}
 			),
 			None::<&str>
 		);
@@ -514,11 +533,7 @@ impl App
 			Some(highlight),
 			Some("↑↓ - move".cyan()),
 			Some(Style::default().fg(Color::White)),
-			Some(
-				Style::default()
-				.fg(Color::Black)
-				.bg(Color::Cyan)
-			)
+			Some(Style::default().fg(Color::Black).bg(Color::Cyan))
 		);
 	}
 
@@ -537,10 +552,7 @@ impl App
 		Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(1)
-			.constraints([
-				Constraint::Percentage(100),
-				Constraint::Min(20)
-			])
+			.constraints([Constraint::Percentage(100), Constraint::Min(20)])
 			.split(area)
 	}
 
@@ -586,39 +598,20 @@ impl App
 		buf: &mut Buffer,
 		bottom_center: Option<impl Into<Line<'a>>>,
 		top_right: Option<impl Into<Line<'a>>>
-	) {
+	)
+	{
 		let mut block = Block::default()
 			.borders(Borders::ALL)
 			.border_style(Style::default().fg(Color::White))
-			.title(
-				Title::default()
-					.content("Puzzle")
-					.position(Position::Top)
-					.alignment(Alignment::Center)
-			)
-			.title(
-				Title::default()
-					.content("⎋ – exit".yellow().bold())
-					.position(Position::Top)
-					.alignment(Alignment::Left)
-			);
+			.title_top(Line::from("Puzzle").centered())
+			.title_top(Line::from("⎋ – exit".yellow().bold()).left_aligned());
 		if let Some(title) = bottom_center
 		{
-			block = block.title(
-				Title::default()
-					.content(title)
-					.position(Position::Bottom)
-					.alignment(Alignment::Center)
-			);
+			block = block.title_bottom(title.into().centered());
 		}
 		if let Some(title) = top_right
 		{
-			block = block.title(
-				Title::default()
-					.content(title)
-					.position(Position::Top)
-					.alignment(Alignment::Right)
-			);
+			block = block.title_top(title.into().right_aligned());
 		}
 		block.render(area, buf);
 	}
@@ -637,12 +630,18 @@ impl App
 		board: Rc<[Rect]>,
 		buf: &mut Buffer,
 		cell_builder: impl Fn(usize, &str8) -> Paragraph<'_>
-	) {
-		let cells = self.cells.iter().enumerate()
+	)
+	{
+		let cells = self
+			.cells
+			.iter()
+			.enumerate()
 			.map(|(index, cell)| cell_builder(index, cell))
 			.collect::<Vec<_>>();
 		// Lay out the cells in a 4×5 grid.
-		cells.chunks_exact(4).enumerate()
+		cells
+			.chunks_exact(4)
+			.enumerate()
 			.for_each(|(index, chunk)| {
 				let row = Layout::default()
 					.direction(Direction::Horizontal)
@@ -674,7 +673,9 @@ impl App
 	fn solution_list(&self, solver: &Solver) -> Vec<Text>
 	{
 		let mut seen = HashSet::new();
-		solver.solution_paths().iter()
+		solver
+			.solution_paths()
+			.iter()
 			.filter_map(|path| {
 				let color = match path.is_full()
 				{
@@ -720,32 +721,23 @@ impl App
 		bottom_center: Option<impl Into<Line<'a>>>,
 		style: Option<Style>,
 		highlight_style: Option<Style>
-	) {
+	)
+	{
 		let list = match solver
 		{
 			None => List::default(),
 			Some(solver) => List::new(self.solution_list(solver))
 		};
-		let list = list
-			.block({
-				let block = Block::default()
-					.borders(Borders::ALL)
-					.title(
-						Title::default()
-							.content("Solution")
-							.alignment(Alignment::Center)
-					);
-				match bottom_center
-				{
-					None => block,
-					Some(title) => block.title(
-						Title::default()
-							.content(title)
-							.position(Position::Bottom)
-							.alignment(Alignment::Center)
-					)
-				}
-			});
+		let list = list.block({
+			let block = Block::default()
+				.borders(Borders::ALL)
+				.title_top(Line::from("Solution").centered());
+			match bottom_center
+			{
+				None => block,
+				Some(title) => block.title_bottom(title.into().centered())
+			}
+		});
 		let list = match style
 		{
 			None => list,
@@ -777,11 +769,14 @@ impl App
 		match self.state
 		{
 			ExecutionState::Swapping => unreachable!(),
-			ExecutionState::Populating => {}
+			ExecutionState::Populating =>
+			{},
 			ExecutionState::Solving { .. } => self.run_solver(),
 			ExecutionState::Highlighting { .. } => self.run_highlighter(),
-			ExecutionState::Finished { .. } => {}
-			ExecutionState::Exiting { .. } => {}
+			ExecutionState::Finished { .. } =>
+			{},
+			ExecutionState::Exiting { .. } =>
+			{}
 		}
 	}
 
@@ -838,7 +833,11 @@ impl App
 		// references.
 		let mut state = ExecutionState::Swapping;
 		swap(&mut self.state, &mut state);
-		if let ExecutionState::Highlighting { solver, until, path } = state
+		if let ExecutionState::Highlighting {
+			solver,
+			until,
+			path
+		} = state
 		{
 			if Instant::now() >= until
 			{
@@ -874,8 +873,11 @@ impl App
 			match read()?
 			{
 				Event::Key(event) if event.kind == KeyEventKind::Press =>
-					self.process_key_event(event),
-				_ => {}
+				{
+					self.process_key_event(event)
+				},
+				_ =>
+				{}
 			}
 		}
 		Ok(())
@@ -902,14 +904,23 @@ impl App
 		{
 			ExecutionState::Swapping => unreachable!(),
 			ExecutionState::Populating =>
-				self.process_key_event_populating(event),
+			{
+				self.process_key_event_populating(event)
+			},
 			ExecutionState::Solving { .. } =>
-				self.process_key_event_solving(event),
+			{
+				self.process_key_event_solving(event)
+			},
 			ExecutionState::Highlighting { .. } =>
-				self.process_key_event_highlighting(event),
+			{
+				self.process_key_event_highlighting(event)
+			},
 			ExecutionState::Finished { .. } =>
-				self.process_key_event_finished(event),
-			ExecutionState::Exiting { .. } => {}
+			{
+				self.process_key_event_finished(event)
+			},
+			ExecutionState::Exiting { .. } =>
+			{}
 		}
 	}
 
@@ -942,12 +953,16 @@ impl App
 			KeyCode::BackTab => self.move_index(-1),
 			KeyCode::Tab => self.move_index(1),
 			KeyCode::Backspace => self.delete(),
-			KeyCode::Delete if event.modifiers.contains(KeyModifiers::SHIFT) =>
-				self.clear_all(),
+			KeyCode::Delete
+				if event.modifiers.contains(KeyModifiers::SHIFT) =>
+			{
+				self.clear_all()
+			},
 			KeyCode::Delete => self.clear(),
 			KeyCode::Enter => self.start_solver(),
 			KeyCode::Char(c) if c.is_alphabetic() => self.append(c),
-			_ => {}
+			_ =>
+			{}
 		}
 	}
 
@@ -976,7 +991,8 @@ impl App
 	/// * `solver` - The solver.
 	fn process_key_event_solving(&mut self, event: KeyEvent)
 	{
-		if let KeyCode::Esc = event.code {
+		if let KeyCode::Esc = event.code
+		{
 			self.exit()
 		}
 	}
@@ -995,7 +1011,8 @@ impl App
 	/// * `solver` - The solver.
 	fn process_key_event_highlighting(&mut self, event: KeyEvent)
 	{
-		if let KeyCode::Esc = event.code {
+		if let KeyCode::Esc = event.code
+		{
 			self.exit()
 		}
 	}
@@ -1016,7 +1033,8 @@ impl App
 			KeyCode::Esc => self.exit(),
 			KeyCode::Up => self.move_word_index(-1),
 			KeyCode::Down => self.move_word_index(1),
-			_ => {}
+			_ =>
+			{}
 		}
 	}
 
@@ -1028,18 +1046,33 @@ impl App
 		{
 			ExecutionState::Swapping => unreachable!(),
 			ExecutionState::Populating =>
-				ExecutionState::Exiting { solution: vec![] },
+			{
+				ExecutionState::Exiting { solution: vec![] }
+			},
 			ExecutionState::Solving { .. } =>
-				ExecutionState::Exiting { solution: vec![] },
+			{
+				ExecutionState::Exiting { solution: vec![] }
+			},
 			ExecutionState::Highlighting { .. } =>
-				ExecutionState::Exiting { solution: vec![] },
+			{
+				ExecutionState::Exiting { solution: vec![] }
+			},
 			ExecutionState::Finished { ref solver, .. } =>
+			{
 				ExecutionState::Exiting {
-					solution: solver.solution().iter()
-						.map(|s| s.to_string()).collect()
-				},
+					solution: solver
+						.solution()
+						.iter()
+						.map(|s| s.to_string())
+						.collect()
+				}
+			},
 			ExecutionState::Exiting { ref solution } =>
-				ExecutionState::Exiting { solution: solution.clone() }
+			{
+				ExecutionState::Exiting {
+					solution: solution.clone()
+				}
+			},
 		};
 		self.state = next_state;
 	}
@@ -1054,12 +1087,21 @@ impl Widget for &App
 			ExecutionState::Swapping => unreachable!(),
 			ExecutionState::Populating => self.render_populating(area, buf),
 			ExecutionState::Solving { ref solver } =>
-				self.render_solving(area, buf, solver),
-			ExecutionState::Highlighting { ref solver, ref path, .. } =>
-				self.render_highlighting(area, buf, solver, path),
-			ExecutionState::Finished { ref solver, is_solved, highlight } =>
-				self.render_finished(area, buf, solver, is_solved, highlight),
-			ExecutionState::Exiting { .. } => {}
+			{
+				self.render_solving(area, buf, solver)
+			},
+			ExecutionState::Highlighting {
+				ref solver,
+				ref path,
+				..
+			} => self.render_highlighting(area, buf, solver, path),
+			ExecutionState::Finished {
+				ref solver,
+				is_solved,
+				highlight
+			} => self.render_finished(area, buf, solver, is_solved, highlight),
+			ExecutionState::Exiting { .. } =>
+			{}
 		}
 	}
 }
@@ -1076,14 +1118,16 @@ enum ExecutionState
 	Populating,
 
 	/// The solver is running, incrementally populating the solution.
-	Solving {
+	Solving
+	{
 		/// The solver for the puzzle.
-		solver: Solver,
+		solver: Solver
 	},
 
 	/// The solver is highlighting the most recently discovered solution, and
 	/// will momentarily return to the [Solving](ExecutionState::Solving) state.
-	Highlighting {
+	Highlighting
+	{
 		/// The solver for the puzzle.
 		solver: Solver,
 
@@ -1096,7 +1140,8 @@ enum ExecutionState
 	},
 
 	/// The solver has finished, but the user is reviewing the solution.
-	Finished {
+	Finished
+	{
 		/// The solver for the puzzle.
 		solver: Solver,
 
@@ -1108,7 +1153,8 @@ enum ExecutionState
 	},
 
 	/// The application is exiting.
-	Exiting {
+	Exiting
+	{
 		/// The solver for the puzzle.
 		solution: Vec<String>
 	}
@@ -1164,7 +1210,7 @@ mod test
 			((3, 1), [(3, 0), (3, 1), (3, 2), (2, 1)]),
 			((3, 2), [(3, 1), (3, 2), (3, 3), (2, 2)]),
 			((3, 3), [(3, 2), (3, 3), (3, 4), (2, 3)]),
-			((3, 4), [(3, 3), (3, 4), (3, 4), (2, 4)])
+			((3, 4), [(3, 3), (3, 4), (3, 4), (2, 4)]),
 		];
 		for (initial, expected) in cases
 		{
@@ -1213,7 +1259,7 @@ mod test
 			((0, 4), [(1, 4), (3, 3)]),
 			((1, 4), [(2, 4), (0, 4)]),
 			((2, 4), [(3, 4), (1, 4)]),
-			((3, 4), [(3, 4), (2, 4)])
+			((3, 4), [(3, 4), (2, 4)]),
 		];
 		for (initial, expected) in cases
 		{
@@ -1237,7 +1283,7 @@ mod test
 		app.process_key_event(KeyCode::Backspace.into());
 		assert_eq!(app.current_cell(), &str8::default());
 		// Test appending and deleting all alphabetic characters.
-		for c in 'a' ..= 'z'
+		for c in 'a'..='z'
 		{
 			app.process_key_event(KeyCode::Char(c).into());
 			assert_eq!(app.current_cell(), &str8::make(&c.to_string()));
@@ -1246,7 +1292,7 @@ mod test
 		}
 		// Test saturating the cell.
 		let mut s = String::new();
-		for c in 'a' ..= 'j'
+		for c in 'a'..='j'
 		{
 			s.push(c);
 			app.process_key_event(KeyCode::Char(c).into());
