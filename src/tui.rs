@@ -6,7 +6,7 @@
 //! initialize and restore the terminal in the same way. But currently it
 //! remains a responsibility of the application to do so.
 
-use std::{io::{self, stdout, Stdout}, panic};
+use std::{io::{self, stdout, Stdout}, panic, sync::{Arc, Mutex}, thread};
 
 use crossterm::{
 	execute,
@@ -15,10 +15,7 @@ use crossterm::{
 		EnterAlternateScreen, LeaveAlternateScreen
 	}
 };
-use quartiles_solver::dictionary::Dictionary;
 use ratatui::{backend::{Backend, CrosstermBackend}, Terminal};
-
-use crate::app::App;
 
 ////////////////////////////////////////////////////////////////////////////////
 //                         Text-based user interface.                         //
@@ -27,34 +24,59 @@ use crate::app::App;
 /// The text-based user interface (TUI) type.
 pub type Tui = Terminal<CrosstermBackend<Stdout>>;
 
-/// Open the text-based user interface (TUI) for inputting and solving a
-/// Quartiles puzzle. Arrange for the terminal to be restored to its original
-/// state in case of panic.
+/// Open the text-based user interface (TUI). Arrange for the terminal to be
+/// restored to its original state in case of panic _on the calling thread
+/// only_. During this call, the calling thread is the UI thread, by definition.
 ///
 /// # Arguments
 ///
-/// * `highlight_duration_µs` - How long (in µs) to highlight an individual
-///   word in the TUI.
-/// * `dictionary` - The dictionary to use for solving the puzzle.
+/// * `f` - The function to apply to the TUI.
 ///
 /// # Returns
 ///
-/// The solution to the puzzle, as a word list.
+/// The result of applying `f` to the TUI.
 ///
 /// # Errors
 ///
 /// Any error that occurs while driving the TUI.
-pub fn tui(highlight_duration_µs: u64, dictionary: Dictionary) -> io::Result<Vec<String>>
+pub fn tui<F, T>(f: F) -> io::Result<T>
+	where F: FnOnce(&mut Tui) -> io::Result<T>
 {
 	// Capture the original panic hook and replace it with one that restores
-	// the terminal before panicking.
+	// the terminal before panicking. The panic hook is a global resource, so we
+	// use the Arc<Mutex<Option>> idiom to share it between the TUI thread and
+	// the panic hook.
 	let original_hook = panic::take_hook();
-	let mut tui = tui_init()?;
+	let original_hook = Arc::new(Mutex::new(Some(original_hook)));
+	let original_hook_clone = original_hook.clone();
+	let tui_thread = thread::current().id();
 	panic::set_hook(Box::new(move |info| {
-		let _ = tui_restore();
-		original_hook(info);
+		if thread::current().id() == tui_thread
+		{
+			// Only restore the terminal if the panic occurred in the TUI
+			// thread. We don't care about the result, because there isn't much
+			// we can do to recover anyway, especially given that we are already
+			// panicking.
+			let _ = tui_restore();
+		}
+		// Call the original panic hook. Take care not to vacate the inner
+		// Option, because we don't know enough about the semantics of the
+		// original hook to decide that it should only be called once. We assume
+		// that the original hook has multiple-call semantics, or that it guards
+		// against being called multiple times within its own implementation.
+		let original_hook = original_hook.lock().unwrap();
+		original_hook.as_ref().unwrap()(info);
 	}));
-	let result = App::new(highlight_duration_µs, dictionary).run(&mut tui);
+	// `tui_init` is non-atomic, so we must ensure that the terminal is restored
+	// in the event of partial success.
+	let result = match tui_init()
+	{
+		Ok(mut terminal) => f(&mut terminal),
+		Err(e) => Err(e)
+	};
+	// We don't want to re-enter `tui_restore` in the event of a panic, so we
+	// restore the original panic hook before calling it.
+	panic::set_hook(original_hook_clone.lock().unwrap().take().unwrap());
 	tui_restore()?;
 	result
 }

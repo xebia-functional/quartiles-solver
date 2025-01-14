@@ -23,6 +23,7 @@ mod tui;
 
 use std::panic;
 
+use app::App;
 use clap::{Parser, Subcommand};
 use log::{debug, trace};
 
@@ -102,7 +103,10 @@ fn main()
 		Command::Solve { highlight_duration, quiet} =>
 		{
 			trace!("Opening TUI");
-			let mut solution = tui(highlight_duration, dictionary)
+			let mut solution =
+				tui(
+					move |tui| App::new(highlight_duration, dictionary).run(tui)
+				)
 				.unwrap_or_else(|e| panic!("Failed to drive TUI: {}", e));
 			if !quiet
 			{
