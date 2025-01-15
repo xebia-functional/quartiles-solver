@@ -48,7 +48,7 @@ pub fn tui<F, T>(f: F) -> io::Result<T>
 	// the panic hook.
 	let original_hook = panic::take_hook();
 	let original_hook = Arc::new(Mutex::new(Some(original_hook)));
-	let original_hook_clone = original_hook.clone();
+	let original_hook_clone = Arc::clone(&original_hook);
 	let tui_thread = thread::current().id();
 	panic::set_hook(Box::new(move |info| {
 		if thread::current().id() == tui_thread
