@@ -41,8 +41,6 @@ abbey
 abbeys
 abbot
 abbots
-abbr
-abbrev
 abbreviate
 abbreviated
 abbreviates
@@ -491,7 +489,6 @@ accrue
 accrued
 accrues
 accruing
-acct
 acculturate
 acculturated
 acculturates
@@ -1095,7 +1092,6 @@ advocate
 advocated
 advocates
 advocating
-advt
 adware
 adz
 adze
@@ -4228,7 +4224,6 @@ autumns
 auxiliaries
 auxiliary
 auxin
-av
 avail
 availability
 available
@@ -8466,7 +8461,6 @@ brutes
 brutish
 brutishly
 brutishness
-bu
 bub
 bubble
 bubbled
@@ -21857,8 +21851,6 @@ dystonia
 dystopi
 dystopia
 dystopian
-e
-ea
 each
 eager
 eagerer
@@ -22874,7 +22866,6 @@ emulsifying
 emulsion
 emulsions
 emus
-en
 enable
 enabled
 enabler
@@ -23913,7 +23904,6 @@ essences
 essential
 essentially
 essentials
-est
 establish
 established
 establishes
@@ -25050,7 +25040,6 @@ eying
 eyrie
 eyries
 eyry
-fa
 fab
 fable
 fabled
@@ -30049,7 +30038,6 @@ governor
 governors
 governorship
 governs
-govt
 gown
 gowned
 gowning
@@ -35880,7 +35868,6 @@ innervating
 innervation
 inning
 innings
-innit
 innkeeper
 innkeepers
 innocence
@@ -38483,7 +38470,6 @@ kvetcher
 kvetchers
 kvetches
 kvetching
-la
 lab
 label
 labeled
@@ -39379,7 +39365,6 @@ leitmotiv
 leitmotivs
 lemma
 lemmas
-lemme
 lemming
 lemmings
 lemon
@@ -42034,7 +42019,6 @@ mazourka
 mazourkas
 mazurka
 mazurkas
-mdse
 me
 mead
 meadow
@@ -42711,7 +42695,6 @@ mezzanine
 mezzanines
 mezzo
 mezzos
-mi
 miaow
 miaowed
 miaowing
@@ -43659,7 +43642,6 @@ mizzen
 mizzenmast
 mizzenmasts
 mizzens
-mkay
 mnemonic
 mnemonically
 mnemonics
@@ -44496,7 +44478,6 @@ mown
 mows
 moxie
 mozzarella
-mtge
 mu
 much
 mucilage
@@ -45676,8 +45657,6 @@ nicotine
 niece
 nieces
 nifedipine
-niff
-niffy
 niftier
 niftiest
 nifty
@@ -45865,7 +45844,6 @@ noels
 noes
 noggin
 noggins
-nohow
 noise
 noised
 noiseless
@@ -50563,7 +50541,6 @@ peruse
 perused
 peruses
 perusing
-perv
 pervade
 pervaded
 pervades
@@ -50581,7 +50558,6 @@ pervert
 perverted
 perverting
 perverts
-pervs
 peseta
 pesetas
 peskier
@@ -52344,14 +52320,12 @@ pony
 ponying
 ponytail
 ponytails
-poo
 pooch
 pooched
 pooches
 pooching
 poodle
 poodles
-pooed
 poof
 poofs
 poofter
@@ -52360,7 +52334,6 @@ pooh
 poohed
 poohing
 poohs
-pooing
 pool
 pooled
 pooling
@@ -54063,7 +54036,6 @@ promulgating
 promulgation
 promulgator
 promulgators
-pron
 prone
 proneness
 prong
@@ -54465,7 +54437,6 @@ psaltery
 psephologist
 psephologists
 psephology
-pseud
 pseudo
 pseudonym
 pseudonymous
@@ -54473,8 +54444,6 @@ pseudonyms
 pseudos
 pseudoscience
 pseudosciences
-pseuds
-pseudy
 pshaw
 pshaws
 psi
@@ -54590,7 +54559,6 @@ puckish
 puckishly
 puckishness
 pucks
-pud
 pudding
 puddings
 puddle
@@ -54603,7 +54571,6 @@ pudgier
 pudgiest
 pudginess
 pudgy
-puds
 pueblo
 pueblos
 puerile
@@ -56049,7 +56016,6 @@ razzed
 razzes
 razzing
 razzmatazz
-re
 reabsorb
 reabsorbed
 reabsorbing
@@ -56138,7 +56104,6 @@ reagent
 reagents
 real
 realer
-reales
 realest
 realign
 realigned
@@ -56377,7 +56342,6 @@ rebuttal
 rebuttals
 rebutted
 rebutting
-rec
 recalcitrance
 recalcitrant
 recalculate
@@ -56420,7 +56384,6 @@ recasting
 recasts
 recce
 recces
-recd
 recede
 receded
 recedes
@@ -60802,8 +60765,6 @@ sarges
 sari
 saris
 sarky
-sarnie
-sarnies
 sarong
 sarongs
 sarsaparilla
@@ -61973,7 +61934,6 @@ securest
 securing
 securities
 security
-secy
 sedan
 sedans
 sedate
@@ -63884,7 +63844,6 @@ sitter
 sitters
 sitting
 sittings
-situ
 situate
 situated
 situates
@@ -65121,7 +65080,6 @@ sobriety
 sobriquet
 sobriquets
 sobs
-soc
 soccer
 sociability
 sociable
@@ -65810,9 +65768,6 @@ spearheads
 spearing
 spearmint
 spears
-spec
-specced
-speccing
 special
 specialism
 specialisms
@@ -65857,7 +65812,6 @@ speckled
 speckles
 speckling
 specks
-specs
 spectacle
 spectacles
 spectacular
@@ -70218,9 +70172,6 @@ teazel
 teazels
 teazle
 teazles
-tech
-techie
-techies
 technetium
 technical
 technicalities
@@ -70247,7 +70198,6 @@ technologists
 technology
 technophobe
 technophobes
-techs
 tectonic
 tectonics
 ted
@@ -70407,7 +70357,6 @@ tells
 telltale
 telltales
 tellurium
-telly
 temblor
 temblors
 temerity
@@ -71246,7 +71195,6 @@ thyroid
 thyroidal
 thyroids
 thyself
-ti
 tiara
 tiaras
 tibia
@@ -72197,7 +72145,6 @@ traction
 tractor
 tractors
 tracts
-trad
 trade
 traded
 trademark
@@ -73682,12 +73629,10 @@ udders
 ufologist
 ufologists
 ufology
-ugh
 uglier
 ugliest
 ugliness
 ugly
-uh
 ukase
 ukases
 ukelele
@@ -77039,9 +76984,6 @@ vulvas
 vuvuzela
 vuvuzelas
 vying
-wack
-wacker
-wackest
 wackier
 wackiest
 wackiness
@@ -77206,7 +77148,6 @@ walleyed
 walleyes
 wallflower
 wallflowers
-wallies
 walling
 wallop
 walloped
@@ -77222,7 +77163,6 @@ wallpapered
 wallpapering
 wallpapers
 walls
-wally
 walnut
 walnuts
 walrus

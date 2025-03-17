@@ -320,33 +320,20 @@ impl App
 			Some("↵ – solve".green().bold())
 		);
 		// Render all of the cells.
-		self.render_cells(board, buf, |index, cell| {
-			let cell_style = if index == self.current_index()
-			{
-				Style::default().fg(Color::Black).bg(Color::Cyan)
-			}
-			else
-			{
-				Style::default()
-			};
-			let border_color = if cell.is_empty()
-			{
-				Color::Red
-			}
-			else
-			{
-				Color::White
-			};
-			let block = Block::new()
-				.border_type(BorderType::Rounded)
-				.borders(Borders::ALL)
-				.border_style(Style::default().fg(border_color));
-			let cell = Paragraph::new(cell.as_str())
-				.block(block)
-				.alignment(Alignment::Left)
-				.style(cell_style)
-				.wrap(Wrap { trim: true });
-			cell
+		self.render_cells(board, buf, |index, content| {
+			self.cell(
+				content.as_str(),
+				match content.is_empty()
+				{
+					true => Style::default().fg(Color::Red),
+					false => Style::default().fg(Color::White)
+				},
+				match index == self.current_index()
+				{
+					true => Style::default().fg(Color::Black).bg(Color::Cyan),
+					false => Style::default()
+				}
+			)
 		});
 		// Render the empty solution.
 		self.render_solution_list(
@@ -376,18 +363,7 @@ impl App
 		// Render the board.
 		self.render_board(outer[0], buf, None::<&str>, None::<&str>);
 		// Render all of the cells.
-		self.render_cells(board, buf, |_, cell| {
-			let block = Block::new()
-				.border_type(BorderType::Rounded)
-				.borders(Borders::ALL)
-				.border_style(Style::default().fg(Color::White));
-			let cell = Paragraph::new(cell.as_str())
-				.block(block)
-				.alignment(Alignment::Left)
-				.style(Style::default())
-				.wrap(Wrap { trim: true });
-			cell
-		});
+		self.render_cells(board, buf, |_, content| self.cell_default(content));
 		// Render the solution.
 		self.render_solution_list(
 			outer[1],
@@ -422,44 +398,8 @@ impl App
 		let board = self.split_board(outer[0]);
 		self.render_board(outer[0], buf, None::<&str>, None::<&str>);
 		// Build all of the cells.
-		self.render_cells(board, buf, |index, cell| {
-			let in_fragment =
-				path.iter().any(|i| matches!(i, Some(x) if x == index));
-			let border_color = if in_fragment
-			{
-				Color::Black
-			}
-			else
-			{
-				Color::White
-			};
-			let block = Block::new()
-				.border_type(BorderType::Rounded)
-				.borders(Borders::ALL)
-				.border_style(Style::default().fg(border_color));
-			let cell = if in_fragment
-			{
-				let index_in_fragment = path
-					.iter()
-					.position(|i| matches!(i, Some(x) if x == index))
-					.unwrap();
-				let label =
-					format!("{} {}", index_in_fragment + 1, cell.as_str());
-				Paragraph::new(label)
-					.block(block)
-					.alignment(Alignment::Left)
-					.style(Style::default().fg(Color::Black).bg(Color::Green))
-					.wrap(Wrap { trim: true })
-			}
-			else
-			{
-				Paragraph::new(cell.as_str())
-					.block(block)
-					.alignment(Alignment::Left)
-					.style(Style::default())
-					.wrap(Wrap { trim: true })
-			};
-			cell
+		self.render_cells(board, buf, |index, content| {
+			self.cell_with_possible_highlighting(index, content, path)
 		});
 		// Render the solution. Colorize the quartiles. Highlight the last word,
 		// which corresponds to the argument fragment path.
@@ -512,17 +452,16 @@ impl App
 			None::<&str>
 		);
 		// Render all of the cells.
-		self.render_cells(board, buf, |_, cell| {
-			let block = Block::new()
-				.border_type(BorderType::Rounded)
-				.borders(Borders::ALL)
-				.border_style(Style::default().fg(Color::White));
-			let cell = Paragraph::new(cell.as_str())
-				.block(block)
-				.alignment(Alignment::Left)
-				.style(Style::default())
-				.wrap(Wrap { trim: true });
-			cell
+		self.render_cells(board, buf, |index, content| {
+			if let Some(highlight) = highlight
+			{
+				let path = &solver.solution_paths()[highlight];
+				self.cell_with_possible_highlighting(index, content, path)
+			}
+			else
+			{
+				self.cell_default(content)
+			}
 		});
 		// Render the solution. Colorize the quartiles. Highlight the selected
 		// word.
@@ -535,6 +474,85 @@ impl App
 			Some(Style::default().fg(Color::White)),
 			Some(Style::default().fg(Color::Black).bg(Color::Cyan))
 		);
+	}
+
+	/// Render a cell with the given content, border style, and cell style.
+	///
+	/// # Parameters
+	/// * `content`: The content of the cell.
+	/// * `border_style`: The style of the cell border.
+	/// * `cell_style`: The style of the cell content.
+	///
+	/// # Returns
+	/// A [Paragraph](Paragraph) with the cell content and specified styling.
+	fn cell<'t>(
+		&self,
+		content: impl Into<Text<'t>>,
+		border_style: Style,
+		cell_style: Style
+	) -> Paragraph<'t>
+	{
+		let block = Block::new()
+			.border_type(BorderType::Rounded)
+			.borders(Borders::ALL)
+			.border_style(border_style);
+		Paragraph::new(content)
+			.block(block)
+			.alignment(Alignment::Left)
+			.style(cell_style)
+			.wrap(Wrap { trim: true })
+	}
+
+	/// Render a default cell.
+	///
+	/// # Parameters
+	/// * `content`: The content of the cell.
+	///
+	/// # Returns
+	/// A [Paragraph](Paragraph) with the cell content and default styling.
+	#[inline]
+	fn cell_default<'c>(&self, content: &'c str) -> Paragraph<'c>
+	{
+		self.cell(content, Style::default().fg(Color::White), Style::default())
+	}
+
+	/// Render a cell with possible highlighting. This is used both in the
+	/// [Highlighting](ExecutionState::Highlighting) and
+	/// [Finished](ExecutionState::Finished) states.
+	///
+	/// # Parameters
+	/// * `index`: The index of the cell.
+	/// * `content`: The content of the cell.
+	/// * `path`: The [fragment path](FragmentPath) to consider when determining
+	///   whether the cell should be highlighted, if any.
+	///
+	/// # Returns
+	/// A [Paragraph](Paragraph) with the cell content and possible
+	/// highlighting.
+	fn cell_with_possible_highlighting<'c>(
+		&self,
+		index: usize,
+		content: &'c str,
+		path: &FragmentPath
+	) -> Paragraph<'c>
+	{
+		let in_path = path.iter().any(|i| matches!(i, Some(x) if x == index));
+		let border_color = if in_path { Color::Black } else { Color::White };
+		let border_style = Style::default().fg(border_color);
+		if in_path
+		{
+			let index_in_path = path
+				.iter()
+				.position(|i| matches!(i, Some(x) if x == index))
+				.unwrap();
+			let content = format!("{} {}", index_in_path + 1, content);
+			let cell_style = Style::default().fg(Color::Black).bg(Color::Green);
+			self.cell(content, border_style, cell_style)
+		}
+		else
+		{
+			self.cell(content, border_style, Style::default())
+		}
 	}
 
 	/// Split the specified area into two parts: the puzzle and the solution.
@@ -784,7 +802,8 @@ impl App
 	fn run_solver(&mut self)
 	{
 		// Take care to evacuate the application state in order to keep the
-		// borrow happy while juggling state ownership and mutable references.
+		// borrow checker happy while juggling state ownership and mutable
+		// references.
 		let mut state = ExecutionState::Swapping;
 		swap(&mut self.state, &mut state);
 		if let ExecutionState::Solving { solver } = state
@@ -1155,7 +1174,7 @@ enum ExecutionState
 	/// The application is exiting.
 	Exiting
 	{
-		/// The solver for the puzzle.
+		/// The solution to the puzzle.
 		solution: Vec<String>
 	}
 }

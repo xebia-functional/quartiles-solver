@@ -31,10 +31,7 @@ impl Dictionary
 	///
 	/// An empty dictionary.
 	#[inline]
-	pub fn new() -> Self
-	{
-		Self(Default::default())
-	}
+	pub fn new() -> Self { Self(Default::default()) }
 
 	/// Check if the dictionary is empty.
 	///
@@ -43,10 +40,7 @@ impl Dictionary
 	/// `true` if the dictionary is empty, `false` otherwise.
 	#[inline]
 	#[must_use]
-	pub fn is_empty(&self) -> bool
-	{
-		self.0.is_empty()
-	}
+	pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
 	/// Check if the dictionary contains the given word.
 	///
@@ -59,10 +53,7 @@ impl Dictionary
 	/// `true` if the dictionary contains the word, `false` otherwise.
 	#[inline]
 	#[must_use]
-	pub fn contains(&self, word: &str) -> bool
-	{
-		self.0.contains(word)
-	}
+	pub fn contains(&self, word: &str) -> bool { self.0.contains(word) }
 
 	/// Check if the dictionary contains a word with the given prefix.
 	///
@@ -96,9 +87,9 @@ impl Dictionary
 
 	/// Open a dictionary with the given name. Only the specified directory will
 	/// be searched. `name` denotes the dictionary file, sans the extension. If
-	/// a binary dictionary (`<name>.dict`) exists, it will be read; otherwise,
-	/// a text file (`<name>.txt`) will be read and a binary dictionary will be
-	/// created (to optimize future reads).
+	/// a binary dictionary (`<name>.dict`) exists _and_ is newer than the text
+	/// file (`<name>.txt`), it will be read; otherwise, a text file will be
+	/// read and a binary dictionary will be created (to optimize future reads).
 	///
 	/// # Arguments
 	///
@@ -117,7 +108,24 @@ impl Dictionary
 	pub fn open<T: AsRef<Path>>(dir: T, name: &str) -> Result<Self, io::Error>
 	{
 		let dict_path = dir.as_ref().join(format!("{}.dict", name));
-		if dict_path.exists()
+		let txt_path = dir.as_ref().join(format!("{}.txt", name));
+		// The possibility of I/O errors makes this rather messy, unfortunately,
+		// but the gist is to compare the modification times of the binary and
+		// text files in pursuit of using the binary dictionary only if it's
+		// newer than the text dictionary. If anything goes wrong, we fall back
+		// to reading the text file. Note that we don't have to explicitly
+		// check for the existence of the binary dictionary file, as the
+		// `metadata` call will fail if it doesn't exist.
+		if dict_path
+			.metadata()
+			.and_then(|m| m.modified())
+			.and_then(|dict_time| {
+				txt_path
+					.metadata()
+					.and_then(|n| n.modified())
+					.map(|txt_time| dict_time > txt_time)
+			})
+			.unwrap_or(false)
 		{
 			let dictionary = Self::deserialize_from_file(&dict_path);
 			trace!("Read binary dictionary: {}", dict_path.display());
@@ -125,15 +133,14 @@ impl Dictionary
 		}
 		else
 		{
-			let txt_path = dir.as_ref().join(format!("{}.txt", name));
 			let dictionary = Self::read_from_file(&txt_path)?;
 			trace!("Read text dictionary: {}", txt_path.display());
 			match dictionary.serialize_to_file(&dict_path)
 			{
-				Ok(_) => trace!(
-					"Wrote binary dictionary: {}",
-					dict_path.display()
-				),
+				Ok(_) =>
+				{
+					trace!("Wrote binary dictionary: {}", dict_path.display())
+				},
 				Err(e) => warn!(
 					"Failed to write binary dictionary: {}: {}",
 					dict_path.display(),
@@ -162,7 +169,8 @@ impl Dictionary
 	{
 		let file = File::open(path)?;
 		let reader = BufReader::new(file);
-		let words = reader.lines().map(|line| line.unwrap()).collect::<Vec<_>>();
+		let words =
+			reader.lines().map(|line| line.unwrap()).collect::<Vec<_>>();
 		let mut dictionary = Self::new();
 		dictionary.populate(&words);
 		Ok(dictionary)
@@ -215,8 +223,8 @@ impl Dictionary
 	) -> Result<(), io::Error>
 	{
 		let mut file = File::create(path)?;
-		let content = bincode::serialize(self)
-			.map_err(|_e| ErrorKind::InvalidData)?;
+		let content =
+			bincode::serialize(self).map_err(|_e| ErrorKind::InvalidData)?;
 		file.write_all(&content)?;
 		Ok(())
 	}
@@ -235,10 +243,7 @@ mod test
 	/// The path to the dictionary file.
 	#[inline]
 	#[must_use]
-	const fn test_path() -> &'static str
-	{
-		"dict/english.txt"
-	}
+	const fn test_path() -> &'static str { "dict/english.txt" }
 
 	/// Test basic functionality of [`Dictionary`]:
 	///
@@ -264,8 +269,7 @@ mod test
 	#[test]
 	fn test_read_from_file()
 	{
-		let dictionary =
-			Dictionary::read_from_file(test_path()).unwrap();
+		let dictionary = Dictionary::read_from_file(test_path()).unwrap();
 		assert!(!dictionary.is_empty());
 		// These words had better be in the dictionary…
 		assert!(dictionary.contains("hello"));
@@ -278,11 +282,11 @@ mod test
 	#[test]
 	fn test_serialize_to_file()
 	{
-		let dictionary =
-			Dictionary::read_from_file(test_path()).unwrap();
+		let dictionary = Dictionary::read_from_file(test_path()).unwrap();
 		let file = NamedTempFile::new().unwrap();
 		dictionary.serialize_to_file(file.path()).unwrap();
-		let deserialized = Dictionary::deserialize_from_file(file.path()).unwrap();
+		let deserialized =
+			Dictionary::deserialize_from_file(file.path()).unwrap();
 		assert_eq!(dictionary, deserialized);
 	}
 }

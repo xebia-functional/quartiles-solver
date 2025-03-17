@@ -11,7 +11,7 @@ use std::{
 	time::{Duration, Instant}
 };
 
-use fixedstr::{str32, str8};
+use fixedstr::{str8, str32};
 use log::{debug, trace};
 
 use crate::dictionary::Dictionary;
@@ -57,8 +57,7 @@ impl Solver
 	/// A new solver for the given dictionary.
 	pub fn new(dictionary: Rc<Dictionary>, fragments: [str8; 20]) -> Self
 	{
-		Self
-		{
+		Self {
 			dictionary,
 			fragments,
 			path: Default::default(),
@@ -75,10 +74,7 @@ impl Solver
 	/// `true` if the solver is finished, `false` otherwise.
 	#[inline]
 	#[must_use]
-	pub fn is_finished(&self) -> bool
-	{
-		self.is_finished
-	}
+	pub fn is_finished(&self) -> bool { self.is_finished }
 
 	/// Check if the solver has produced a complete solution. This requires not
 	/// only that the solver [finished](Self::is_finished), but also that 5 full
@@ -99,10 +95,13 @@ impl Solver
 			// might be, but it would be jumping the gun to say so.
 			return false
 		}
-		let full_paths = self.solution.iter()
+		let full_paths = self
+			.solution
+			.iter()
 			.filter(|p| p.is_full())
 			.collect::<Vec<_>>();
-		let unique = full_paths.iter()
+		let unique = full_paths
+			.iter()
 			.map(|p| p.word(&self.fragments).to_string())
 			.collect::<HashSet<_>>();
 		// We expect exactly 5 full fragment paths in the solution to an
@@ -116,7 +115,8 @@ impl Solver
 		// For an official puzzle, this should occur automatically when 5
 		// full fragment paths are found, but may not be the case for an
 		// unofficial puzzle.
-		let used_indices = full_paths.iter()
+		let used_indices = full_paths
+			.iter()
 			.flat_map(|p| p.0.iter().flatten())
 			.collect::<HashSet<_>>();
 		used_indices.len() == self.fragments.len()
@@ -171,7 +171,9 @@ impl Solver
 			// If the current fragment path does not denote the prefix of any
 			// word in the dictionary, then there is no need to continue
 			// searching along this path.
-			if self.dictionary.contains_prefix(self.current_word().as_str())
+			if self
+				.dictionary
+				.contains_prefix(self.current_word().as_str())
 			{
 				// Try to append the next fragment index.
 				match self.path.append()
@@ -186,12 +188,12 @@ impl Solver
 							path.word(&self.fragments)
 						);
 						self.path = path;
-					}
+					},
 					Err(FragmentPathError::Overflow) =>
 					{
 						// The fragment path is already full, so there's nothing
 						// to do here. Just continue the algorithm.
-					}
+					},
 					Err(_) => unreachable!()
 				}
 			}
@@ -212,7 +214,7 @@ impl Solver
 							path.word(&self.fragments)
 						);
 						self.path = path;
-					}
+					},
 					Err(FragmentPathError::IndexOverflow) =>
 					{
 						// The rightmost fragment index is already at the
@@ -231,7 +233,7 @@ impl Solver
 									self.current_word()
 								);
 								self.path = path;
-							}
+							},
 							// The fragment path is now empty, so we have
 							// exhausted the search space.
 							Err(FragmentPathError::CannotIncrementEmpty) =>
@@ -239,10 +241,10 @@ impl Solver
 								debug!("exhausted search space");
 								self.is_finished = true;
 								return (self, None)
-							}
+							},
 							Err(_) => unreachable!()
 						}
-					}
+					},
 					Err(_) => unreachable!()
 				}
 			}
@@ -314,10 +316,7 @@ impl Solver
 	/// The candidate word corresponding to the current fragment path.
 	#[inline]
 	#[must_use]
-	fn current_word(&self) -> str32
-	{
-		self.path.word(&self.fragments)
-	}
+	fn current_word(&self) -> str32 { self.path.word(&self.fragments) }
 
 	/// Get the solution to the puzzle, as a list of fragment paths.
 	///
@@ -325,11 +324,7 @@ impl Solver
 	///
 	/// The solution to the puzzle, as a list of fragment paths.
 	#[inline]
-	#[must_use]
-	pub fn solution_paths(&self) -> Vec<FragmentPath>
-	{
-		self.solution.clone()
-	}
+	pub fn solution_paths(&self) -> &[FragmentPath] { &self.solution }
 
 	/// Get the solution to the puzzle, as a list of words.
 	///
@@ -340,7 +335,8 @@ impl Solver
 	#[must_use]
 	pub fn solution(&self) -> Vec<str32>
 	{
-		self.solution.iter()
+		self.solution
+			.iter()
 			.map(|p| p.word(&self.fragments))
 			.collect()
 	}
@@ -378,10 +374,7 @@ impl FragmentPath
 	/// `true` if the fragment path is empty, `false` otherwise.
 	#[inline]
 	#[must_use]
-	pub fn is_empty(&self) -> bool
-	{
-		self.0[0].is_none()
-	}
+	pub fn is_empty(&self) -> bool { self.0[0].is_none() }
 
 	/// Check if the fragment path is full.
 	///
@@ -390,10 +383,7 @@ impl FragmentPath
 	/// `true` if the fragment path is full, `false` otherwise.
 	#[inline]
 	#[must_use]
-	pub fn is_full(&self) -> bool
-	{
-		self.0[3].is_some()
-	}
+	pub fn is_full(&self) -> bool { self.0[3].is_some() }
 
 	/// Append a fragment index to the fragment path, using the existing
 	/// fragment indices as uniqueness constraints. The result is always a
@@ -415,14 +405,15 @@ impl FragmentPath
 		else
 		{
 			// Find the index of the rightmost occupant.
-			let rightmost = self.0.iter()
+			let rightmost = self
+				.0
+				.iter()
 				.rposition(|&index| index.is_some())
 				.map(|i| i as i32)
 				.unwrap_or(-1);
 			// Determine which fragment indices are unavailable.
-			let used = HashSet::<usize>::from_iter(
-				self.0.iter().flatten().copied()
-			);
+			let used =
+				HashSet::<usize>::from_iter(self.0.iter().flatten().copied());
 			// Determine the start index for the new fragment index.
 			let mut start_index = 0;
 			while used.contains(&start_index)
@@ -453,7 +444,9 @@ impl FragmentPath
 	fn increment(&self) -> Result<Self, FragmentPathError>
 	{
 		// Find the index of the rightmost occupant.
-		let rightmost = self.0.iter()
+		let rightmost = self
+			.0
+			.iter()
 			.rposition(|&index| index.is_some())
 			.ok_or(FragmentPathError::CannotIncrementEmpty)?;
 		// Determine which fragment indices are unavailable. Use all but the
@@ -509,9 +502,8 @@ impl FragmentPath
 		else
 		{
 			let mut indices = self.0;
-			let rightmost = indices.iter()
-				.rposition(|&index| index.is_some())
-				.unwrap();
+			let rightmost =
+				indices.iter().rposition(|&index| index.is_some()).unwrap();
 			indices[rightmost] = None;
 			Ok(Self(indices))
 		}
@@ -541,7 +533,9 @@ impl FragmentPath
 				Ok(fragment) => return Ok(fragment),
 				Err(FragmentPathError::IndexOverflow) => continue,
 				Err(FragmentPathError::CannotIncrementEmpty) =>
-					return Err(FragmentPathError::CannotIncrementEmpty),
+				{
+					return Err(FragmentPathError::CannotIncrementEmpty)
+				},
 				Err(_) => unreachable!()
 			}
 		}
@@ -594,10 +588,7 @@ impl Index<usize> for FragmentPath
 	type Output = Option<usize>;
 
 	#[inline]
-	fn index(&self, index: usize) -> &Self::Output
-	{
-		&self.0[index]
-	}
+	fn index(&self, index: usize) -> &Self::Output { &self.0[index] }
 }
 
 impl IndexMut<usize> for FragmentPath
@@ -636,7 +627,9 @@ impl Display for FragmentPathError
 			Self::Overflow => write!(f, "fragment path is already full"),
 			Self::Underflow => write!(f, "fragment path is already empty"),
 			Self::IndexOverflow =>
-				write!(f, "fragment index is already at maximum"),
+			{
+				write!(f, "fragment index is already at maximum")
+			},
 			Self::CannotIncrementEmpty => write!(f, "fragment path is empty")
 		}
 	}
@@ -651,12 +644,12 @@ impl Error for FragmentPathError {}
 #[cfg(test)]
 mod test
 {
-	use std::{collections::HashSet, rc::Rc};
 	use crate::{
 		dictionary::Dictionary,
 		solver::{FragmentPath, FragmentPathError, Solver}
 	};
-	use fixedstr::{str32, str8};
+	use fixedstr::{str8, str32};
+	use std::{collections::HashSet, rc::Rc};
 
 	/// Ensure that appending a fragment index to a fragment path works for all
 	/// interesting cases.
@@ -786,10 +779,7 @@ mod test
 		assert!(path.is_full());
 		assert!(path.is_disjoint());
 		path = path.increment().unwrap();
-		assert_eq!(
-			path,
-			FragmentPath([Some(1), Some(19), Some(3), Some(2)])
-		);
+		assert_eq!(path, FragmentPath([Some(1), Some(19), Some(3), Some(2)]));
 		path = path.increment().unwrap();
 		for i in 4..18
 		{
@@ -802,10 +792,7 @@ mod test
 			assert!(path.is_disjoint());
 			path = path.increment().unwrap();
 		}
-		assert_eq!(
-			path,
-			FragmentPath([Some(1), Some(19), Some(3), Some(18)])
-		);
+		assert_eq!(path, FragmentPath([Some(1), Some(19), Some(3), Some(18)]));
 		assert!(!path.is_empty());
 		assert!(path.is_full());
 		assert!(path.is_disjoint());
@@ -818,10 +805,7 @@ mod test
 	fn test_pop()
 	{
 		let path = FragmentPath::default();
-		assert_eq!(
-			path.pop(),
-			Err(FragmentPathError::Underflow)
-		);
+		assert_eq!(path.pop(), Err(FragmentPathError::Underflow));
 
 		let path = path.append().unwrap();
 		let path = path.append().unwrap();
@@ -859,10 +843,7 @@ mod test
 	fn test_pop_and_increment()
 	{
 		let path = FragmentPath::default();
-		assert_eq!(
-			path.pop_and_increment(),
-			Err(FragmentPathError::Underflow)
-		);
+		assert_eq!(path.pop_and_increment(), Err(FragmentPathError::Underflow));
 
 		let path = path.append().unwrap();
 		let path = path.append().unwrap();
@@ -945,7 +926,10 @@ mod test
 					assert_eq!(
 						path.is_disjoint(),
 						i != j && i != k && j != k,
-						"{}, {}, {}", i, j, k
+						"{}, {}, {}",
+						i,
+						j,
+						k
 					);
 				}
 			}
@@ -963,10 +947,14 @@ mod test
 							FragmentPath([Some(i), Some(j), Some(k), Some(l)]);
 						assert_eq!(
 							path.is_disjoint(),
-							i != j && i != k && i != l
-								&& j != k && j != l
-								&& k != l,
-							"{}, {}, {}, {}", i, j, k, l
+							i != j
+								&& i != k && i != l && j != k
+								&& j != l && k != l,
+							"{}, {}, {}, {}",
+							i,
+							j,
+							k,
+							l
 						);
 					}
 				}
@@ -1032,7 +1020,7 @@ mod test
 					str32::from("truth"),
 					str32::from("truthfully"),
 					str32::from("words"),
-					str32::from("wore")
+					str32::from("wore"),
 				]
 			),
 			(
@@ -1081,7 +1069,7 @@ mod test
 					str32::from("supermarket"),
 					str32::from("tab"),
 					str32::from("table"),
-					str32::from("taboo")
+					str32::from("taboo"),
 				]
 			)
 		];
@@ -1101,8 +1089,10 @@ mod test
 					word
 				);
 			}
-			let expected = HashSet::<str32>::from_iter(expected.iter().cloned());
-			let solution = HashSet::<str32>::from_iter(solution.iter().cloned());
+			let expected =
+				HashSet::<str32>::from_iter(expected.iter().cloned());
+			let solution =
+				HashSet::<str32>::from_iter(solution.iter().cloned());
 			// The solution may contain additional words, so we only check that
 			// the expected words are present. The test dictionary should be
 			// capable enough to find the expected solution.

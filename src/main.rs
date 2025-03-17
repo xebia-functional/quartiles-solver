@@ -27,8 +27,8 @@ use app::App;
 use clap::{Parser, Subcommand};
 use log::{debug, trace};
 
-use tui::tui;
 use quartiles_solver::dictionary::Dictionary;
+use tui::tui;
 
 ////////////////////////////////////////////////////////////////////////////////
 //                           Command line options.                            //
@@ -62,7 +62,8 @@ enum Command
 
 	/// Open the text-based user interface (TUI) for inputting and solving a
 	/// Quartiles puzzle. The solution will be written to standard output.
-	Solve {
+	Solve
+	{
 		/// How long (in µs) to highlight an individual word in the TUI.
 		#[arg(short = 'd', long, default_value = "400")]
 		highlight_duration: u64,
@@ -86,12 +87,12 @@ fn main()
 
 	// Open the dictionary, creating the binary dictionary if necessary.
 	let dictionary = Dictionary::open(&opts.directory, &opts.dictionary)
-		.unwrap_or_else(|_|
-			panic!("Failed to open dictionary: {}/{}.dict or {0}/{1}.txt",
-				opts.directory,
-				opts.dictionary
+		.unwrap_or_else(|_| {
+			panic!(
+				"Failed to open dictionary: {}/{}.dict or {0}/{1}.txt",
+				opts.directory, opts.dictionary
 			)
-		);
+		});
 
 	// Execute the appropriate subcommand.
 	match opts.command
@@ -100,14 +101,16 @@ fn main()
 		{
 			trace!("Exiting after generating binary dictionary");
 		},
-		Command::Solve { highlight_duration, quiet} =>
+		Command::Solve {
+			highlight_duration,
+			quiet
+		} =>
 		{
 			trace!("Opening TUI");
-			let mut solution =
-				tui(
-					move |tui| App::new(highlight_duration, dictionary).run(tui)
-				)
-				.unwrap_or_else(|e| panic!("Failed to drive TUI: {}", e));
+			let mut solution = tui(move |tui| {
+				App::new(highlight_duration, dictionary).run(tui)
+			})
+			.unwrap_or_else(|e| panic!("Failed to drive TUI: {}", e));
 			if !quiet
 			{
 				solution.sort();
